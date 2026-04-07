@@ -1043,6 +1043,24 @@
             display: flex; align-items: center; gap: 6px;
             font-size: 12px; font-weight: 700; color: #0064D9; text-transform: uppercase; letter-spacing: 0.05em;
         }
+        .sg-header-outlink {
+            display: inline-flex; align-items: center; margin-left: 4px;
+            color: #0064D9; cursor: pointer; padding: 2px; border-radius: 4px;
+            position: relative; vertical-align: middle;
+        }
+        .sg-header-outlink:hover { background: #d6eaff; }
+        .sg-header-tooltip {
+            display: none; position: absolute; top: calc(100% + 6px); left: 50%;
+            transform: translateX(-50%); background: #131e29; color: #fff;
+            font-size: 11px; font-weight: 400; white-space: nowrap;
+            padding: 4px 8px; border-radius: 4px; pointer-events: none;
+            text-transform: none; letter-spacing: 0;
+        }
+        .sg-header-tooltip::before {
+            content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+            border: 4px solid transparent; border-bottom-color: #131e29;
+        }
+        .sg-header-outlink:hover .sg-header-tooltip { display: block; }
         .live-suggestions-header .actions {
             display: flex; align-items: center; gap: 8px;
         }
@@ -1074,6 +1092,26 @@
             color: #556B82; display: flex; flex-shrink: 0; cursor: pointer; padding: 2px; border-radius: 4px;
         }
         .live-suggestion-item .sg-name .sg-outlink:hover { color: #0064D9; background: #d6eaff; }
+        .live-suggestion-item .sg-name .sg-name-text { flex-shrink: 1; min-width: 0; }
+        .live-suggestion-item .sg-kebab {
+            flex-shrink: 0; margin-left: auto; background: none; border: none; cursor: pointer;
+            color: #556B82; padding: 2px 4px; border-radius: 4px; display: flex; align-items: center; line-height: 1;
+        }
+        .live-suggestion-item .sg-kebab:hover { color: #0064D9; background: #d6eaff; }
+        .sg-kebab-menu {
+            position: fixed; background: #fff; border: 1px solid #dde1e7;
+            border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            z-index: 9999; min-width: 160px; padding: 4px 0; display: none;
+        }
+        .sg-kebab-menu.open { display: block; }
+        .sg-kebab-menu button {
+            display: block; width: 100%; text-align: left;
+            padding: 8px 14px; background: none; border: none; cursor: pointer;
+            font-size: 13px; color: #131e29; white-space: nowrap;
+        }
+        .sg-kebab-menu button:hover { background: #f0f4f8; }
+        /* Hide dict badge on element while live suggestions are showing */
+        .inline-editing-live .bpmn-dict-badge { opacity: 0 !important; pointer-events: none !important; }
         .live-suggestion-item .sg-badge {
             font-size: 11px; font-weight: 700; color: #0064D9;
             background: #EDF6FF; padding: 2px 6px; border-radius: 10px;
@@ -4012,8 +4050,8 @@ function buildPoolLaneSvg(id, x, y, label) {
 
 // ===== Auto-fitting swimlane that wraps all existing elements =====
 function buildAutoLaneSvg(id, label) {
-    var PAD_TOP = 60, PAD_BOTTOM = 70, PAD_LEFT = 60, PAD_RIGHT = 70;
-    var HEADER_W = 44, r = 8;
+    var PAD_TOP = 60, PAD_BOTTOM = 70, PAD_LEFT = 10, PAD_RIGHT = 70;
+    var POOL_W = 40, LANE_W = 44, r = 8;
 
     // Compute bounding box of all existing BPMN elements
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -4053,20 +4091,38 @@ function buildAutoLaneSvg(id, label) {
 
     if (!hasElements) { minX = 80; minY = 120; maxX = 480; maxY = 320; }
 
-    // Lane wraps all elements: header on left, content contains the elements
-    var rx = minX - HEADER_W - PAD_LEFT;
+    // Pool: leftmost column (POOL_W) + lane header (LANE_W) + content
+    var rx = minX - POOL_W - LANE_W - PAD_LEFT;
     var ry = minY - PAD_TOP;
-    var laneW = (maxX - minX) + HEADER_W + PAD_LEFT + PAD_RIGHT;
-    var laneH = (maxY - minY) + PAD_TOP + PAD_BOTTOM;
+    var totalW = POOL_W + LANE_W + (maxX - minX) + PAD_LEFT + PAD_RIGHT;
+    var totalH = (maxY - minY) + PAD_TOP + PAD_BOTTOM;
 
     var svg = '<g id="' + id + '" class="bpmn-el" data-el-type="lane">';
-    svg += '<rect class="selection-box" x="' + (rx - 1) + '" y="' + (ry - 1) + '" width="' + (laneW + 2) + '" height="' + (laneH + 2) + '"/>';
-    svg += '<rect x="' + rx + '" y="' + ry + '" width="' + laneW + '" height="' + laneH + '" rx="' + r + '" ry="' + r + '" fill="#ffffff" stroke="#1D2D3E" stroke-width="1.5"/>';
-    svg += '<line x1="' + (rx + HEADER_W) + '" y1="' + ry + '" x2="' + (rx + HEADER_W) + '" y2="' + (ry + laneH) + '" stroke="#1D2D3E" stroke-width="1.5"/>';
-    var lcx = rx + HEADER_W / 2, lcy = ry + laneH / 2;
-    svg += '<text x="' + lcx + '" y="' + lcy + '" text-anchor="middle" dominant-baseline="central"'
-        + ' font-family="\'72\',\'72full\',Arial,Helvetica,sans-serif" font-size="14" font-weight="700" fill="#1D2D3E"'
-        + ' transform="rotate(-90 ' + lcx + ' ' + lcy + ')">' + label + '</text>';
+    svg += '<rect class="selection-box" x="' + (rx - 1) + '" y="' + (ry - 1) + '" width="' + (totalW + 2) + '" height="' + (totalH + 2) + '"/>';
+    // 1. White background fill (no stroke — border drawn last on top)
+    svg += '<rect x="' + rx + '" y="' + ry + '" width="' + totalW + '" height="' + totalH + '" rx="' + r + '" ry="' + r + '" fill="#ffffff" stroke="none"/>';
+    // 2. Pool header column background (gray) — inset 1px from left to not cover outer border
+    svg += '<rect x="' + (rx + 1) + '" y="' + (ry + 1) + '" width="' + (POOL_W - 1) + '" height="' + (totalH - 2) + '" rx="' + (r - 1) + '" ry="' + (r - 1) + '" fill="#f5f6f7" stroke="none"/>';
+    svg += '<rect x="' + (rx + r) + '" y="' + (ry + 1) + '" width="' + (POOL_W - r) + '" height="' + (totalH - 2) + '" fill="#f5f6f7" stroke="none"/>';
+    // 3. Pool label (vertical, centered)
+    var rawTitle = '';
+    var titleEl = document.querySelector('.canvas-title-bar .title-text');
+    if (titleEl) rawTitle = titleEl.textContent || '';
+    var poolLabel = rawTitle.replace(/^\[|\]$/g, '').trim() || 'Process';
+    poolLabel = poolLabel.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    var pcx = rx + POOL_W / 2, pcy = ry + totalH / 2;
+    svg += '<text x="' + pcx + '" y="' + pcy + '" text-anchor="middle" dominant-baseline="central"'
+        + ' font-family="\'72\',\'72full\',Arial,Helvetica,sans-serif" font-size="11" font-weight="700" fill="#1D2D3E"'
+        + ' transform="rotate(-90,' + pcx + ',' + pcy + ')">' + poolLabel + '</text>';
+    // 4. Lane label (vertical, centered)
+    var lcx = rx + POOL_W + LANE_W / 2, lcy = ry + totalH / 2;
+    svg += '<text x="0" y="0" text-anchor="middle" dominant-baseline="central"'
+        + ' font-family="\'72\',\'72full\',Arial,Helvetica,sans-serif" font-size="13" font-weight="700" fill="#1D2D3E"'
+        + ' transform="translate(' + lcx + ',' + lcy + ') rotate(-90)">' + label + '</text>';
+    // 5. All borders drawn last — style="fill:none" overrides CSS .bpmn-el[data-el-type="lane"]>rect fill rule
+    svg += '<rect x="' + rx + '" y="' + ry + '" width="' + totalW + '" height="' + totalH + '" rx="' + r + '" ry="' + r + '" style="fill:none" stroke="#1D2D3E" stroke-width="1.5"/>';
+    svg += '<line x1="' + (rx + POOL_W) + '" y1="' + ry + '" x2="' + (rx + POOL_W) + '" y2="' + (ry + totalH) + '" stroke="#1D2D3E" stroke-width="1.5"/>';
+    svg += '<line x1="' + (rx + POOL_W + LANE_W) + '" y1="' + ry + '" x2="' + (rx + POOL_W + LANE_W) + '" y2="' + (ry + totalH) + '" stroke="#1D2D3E" stroke-width="1.5"/>';
     svg += '</g>';
     return svg;
 }
@@ -4140,6 +4196,16 @@ function createCanvasElement(item, dropX, dropY) {
         description: item.description || '',
         linkedDictId: item.id
     };
+
+    // Ensure lane pool is visible by adjusting pan if needed
+    if (isLane) {
+        var PAD_LEFT_REF = 10, POOL_W_REF = 40, LANE_W_REF = 44;
+        var rxRef = 80 - POOL_W_REF - LANE_W_REF - PAD_LEFT_REF; // = -14
+        if (panX > rxRef - 20) {
+            panX = rxRef - 20;
+            applyZoom();
+        }
+    }
 
     pushHistory();
     // Select the new element
@@ -5821,10 +5887,9 @@ function renderSuggestions(suggestions, container) {
     const outlinkSvg = `<svg width="12" height="12" viewBox="0 0 12.8 12.8" fill="none"><path d="M2.4 1.6C1.958 1.6 1.6 1.958 1.6 2.4V10.4C1.6 10.842 1.958 11.2 2.4 11.2H10.4C10.842 11.2 11.2 10.842 11.2 10.4V8C11.2 7.558 11.558 7.2 12 7.2C12.442 7.2 12.8 7.558 12.8 8V10.4C12.8 11.726 11.726 12.8 10.4 12.8H2.4C1.075 12.8 0 11.726 0 10.4V2.4C0 1.075 1.075 0 2.4 0H4.8C5.242 0 5.6 0.358 5.6 0.8C5.6 1.242 5.242 1.6 4.8 1.6H2.4ZM8.8 1.6C8.358 1.6 8 1.242 8 0.8C8 0.358 8.358 0 8.8 0H12C12.442 0 12.8 0.358 12.8 0.8V4C12.8 4.442 12.442 4.8 12 4.8C11.558 4.8 11.2 4.442 11.2 4V2.731L6.966 6.966C6.653 7.278 6.147 7.278 5.834 6.966C5.522 6.653 5.522 6.147 5.834 5.834L10.069 1.6H8.8Z" fill="currentColor"/></svg>`;
 
     let html = `<div class="live-suggestions-header">
-        <span class="title">LIVE SUGGESTIONS</span>
+        <span class="title">LIVE SUGGESTIONS<span class="sg-outlink sg-header-outlink" onmousedown="event.preventDefault(); event.stopPropagation(); liveExploreMore();">${outlinkSvg}<span class="sg-header-tooltip">Go to Dictionary</span></span></span>
         <span class="actions">
             <button class="btn-create-new" onmousedown="event.preventDefault(); event.stopPropagation(); liveCreateNew();">+ Create new</button>
-            <span class="sg-outlink" title="Open Dictionary" style="color:#0064D9;cursor:pointer;display:inline-flex;align-items:center;padding:4px;" onmousedown="event.preventDefault(); event.stopPropagation(); liveExploreMore();">${outlinkSvg}</span>
         </span>
     </div>
     <div class="live-suggestions-list">`;
@@ -5833,28 +5898,17 @@ function renderSuggestions(suggestions, container) {
         const cfg = typeConfig[item.type] || {};
         const dotClass = cfg.dot || 'dot-task';
         const sCfg = item.status && statusConfig[item.status];
-        const outlink = `<span class="sg-outlink" title="View full details" onmousedown="event.preventDefault(); event.stopPropagation(); liveViewDetail('${item.id}');">${outlinkSvg}</span>`;
-        html += `<div class="live-suggestion-item" data-index="${i}">
+        const kebabSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>`;
+        html += `<div class="live-suggestion-item" data-index="${i}" data-item-id="${item.id}">
             <div class="sg-name">
-                <span>${item.name}</span>
-                ${outlink}
-                ${i === 0 ? '<span class="sg-badge">Best match</span>' : ''}
+                <span class="sg-name-text">${item.name}</span>${i === 0 ? '<span class="sg-badge">Best match</span>' : ''}
+                <button class="sg-kebab" title="More options" onmousedown="event.preventDefault(); event.stopPropagation(); toggleSgKebabMenu(this, ${i});">${kebabSvg}</button>
             </div>
             <div class="sg-type">
                 <span class="dot ${dotClass}"></span>
                 <span>${item.type}${item.subCategory ? ' · ' + item.subCategory : ''}</span>
             </div>
             <div class="sg-desc">${item.description || ''}</div>
-            <div class="sg-details">
-                <div class="bp-detail-row"><span class="bp-detail-label">Updated by:</span><span class="bp-detail-value">${item.updatedBy || 'N/A'}</span></div>
-                <div class="bp-detail-row"><span class="bp-detail-label">Last updated:</span><span class="bp-detail-value">${item.lastUpdated || 'N/A'}</span></div>
-                ${sCfg ? `<div class="bp-detail-row"><span class="bp-detail-label">Status:</span><span class="bp-detail-value">${sCfg.label}</span></div>` : ''}
-                <div class="bp-detail-row"><span class="bp-detail-label">Usage:</span><span class="bp-detail-value">${item.usedIn ? item.usedIn.length : 0} processes</span></div>
-                <div class="bp-card-actions">
-                    <button class="bp-action-details" onmousedown="event.preventDefault(); event.stopPropagation(); liveViewDetail('${item.id}');">View Details</button>
-                    <button class="bp-action-link" onmousedown="event.preventDefault(); event.stopPropagation(); acceptSuggestion(${i});">Link to element</button>
-                </div>
-            </div>
         </div>`;
     });
 
@@ -5867,14 +5921,13 @@ function renderSuggestions(suggestions, container) {
 
     container.innerHTML = html;
 
-    // Click on card body toggles expand (but not on outlink or action buttons)
+    // Click on card body → accept suggestion (but not on kebab button)
     container.querySelectorAll('.live-suggestion-item').forEach(el => {
         el.addEventListener('mousedown', function(e) {
-            if (e.target.closest('.sg-outlink') || e.target.closest('.bp-card-actions')) return;
+            if (e.target.closest('.sg-kebab')) return;
             e.preventDefault();
-            const wasExpanded = this.classList.contains('expanded');
-            container.querySelectorAll('.live-suggestion-item.expanded').forEach(c => c.classList.remove('expanded'));
-            if (!wasExpanded) this.classList.add('expanded');
+            const idx = parseInt(this.getAttribute('data-index'));
+            acceptSuggestion(idx);
         });
     });
 }
@@ -5919,11 +5972,7 @@ function liveSearch() {
 }
 
 function liveExploreMore() {
-    var inp = document.getElementById('inlineEdit');
-    var typedText = inp ? inp.value.trim() : '';
-    var elId = inp ? inp.dataset.elementId : null;
-    if (inp) commitInlineEdit(inp.dataset.elementId, inp.value, true);
-    _openDictWithQuery(elId, typedText, false);
+    showToast('Go to Dictionary in SAP Signavio');
 }
 
 function _openDictWithQuery(elId, query, focusSearch) {
@@ -5961,17 +6010,48 @@ function _openDictWithQuery(elId, query, focusSearch) {
     }
 }
 
-function liveViewDetail(dictId) {
-    var inp = document.getElementById('inlineEditFO') || document.getElementById('inlineEdit');
-    var elId = inp ? (inp.dataset.elementId || _inlineEditElementId) : _inlineEditElementId;
-    // Hide the suggestion box without closing inline edit
-    var sugBox = document.getElementById('liveSuggestions');
-    if (sugBox) sugBox.style.display = 'none';
-    var overlay = document.getElementById('detailOverlay');
-    if (overlay) overlay.dataset.fromLiveSuggestions = '1';
+function liveViewDetail(idx) {
+    const item = liveSuggestionsData[idx];
+    if (!item) return;
     _liveDetailOpen = true;
-    openDetail(dictId, elId || null);
+    openDetail(item.id, null, false);
+    // Override footer: single "Link to dictionary" button that accepts this suggestion
+    const footerEl = document.getElementById('detailFooter');
+    if (footerEl) {
+        footerEl.style.display = '';
+        footerEl.innerHTML = `<button class="btn-primary" onclick="closeDetail(); acceptSuggestion(${idx});">Link to dictionary</button>`;
+    }
 }
+
+// Kebab dropdown for live suggestion cards
+(function() {
+    var _menu = null;
+    function closeMenu() {
+        if (_menu) { _menu.remove(); _menu = null; }
+    }
+    // Close on any mousedown outside the menu (use capture so it fires before stopPropagation)
+    document.addEventListener('mousedown', function(e) {
+        if (_menu && !_menu.contains(e.target) && !e.target.closest('.sg-kebab')) closeMenu();
+    }, true);
+    // Close on canvas pan (pointerdown on canvasArea)
+    document.addEventListener('pointermove', function(e) {
+        if (_menu && e.buttons > 0) closeMenu();
+    }, true);
+    window.closeSgKebabMenu = closeMenu;
+    window.toggleSgKebabMenu = function(btn, idx) {
+        if (_menu) { closeMenu(); return; }
+        var rect = btn.getBoundingClientRect();
+        var menu = document.createElement('div');
+        menu.className = 'sg-kebab-menu open';
+        menu.innerHTML =
+            '<button onmousedown="event.stopPropagation();" onclick="closeSgKebabMenu(); liveViewDetail(' + idx + ');">View details</button>' +
+            '<button onmousedown="event.stopPropagation();" onclick="closeSgKebabMenu(); showToast(\'Go to Dictionary in SAP Signavio\');">Go to dictionary</button>';
+        menu.style.top = (rect.bottom + 4) + 'px';
+        menu.style.left = (rect.right - 160) + 'px';
+        document.body.appendChild(menu);
+        _menu = menu;
+    };
+})();
 
 let _inlineEditHiddenTexts = [];
 let _inlineEditOriginalName = null;
@@ -6067,9 +6147,12 @@ function startInlineEdit(id) {
             liveSuggestionsSelectedIndex = -1;
             renderSuggestions(results, sugBox);
             positionSugBox();
+            // Hide dict badge on this element while suggestions are showing
+            el.classList.add('inline-editing-live');
         } else {
             sugBox.style.display = 'none';
             liveSuggestionsData = [];
+            el.classList.remove('inline-editing-live');
         }
     });
 
@@ -6105,6 +6188,11 @@ function commitInlineEdit(id, newName, silent) {
 function removeInlineEdit() {
     _inlineEditHiddenTexts.forEach(t => t.removeAttribute('visibility'));
     _inlineEditHiddenTexts = [];
+    // Remove badge-hiding class from whichever element had it
+    if (_inlineEditElementId) {
+        const editEl = document.getElementById(_inlineEditElementId);
+        if (editEl) editEl.classList.remove('inline-editing-live');
+    }
     _inlineEditOriginalName = null;
     _inlineEditElementId = null;
     _liveDetailOpen = false;
@@ -6640,19 +6728,6 @@ function renderElementAttributes(elId) {
             h += '<div class="rsp-dlc-row"><span class="rsp-dlc-label">Last updated</span><span class="rsp-dlc-value">' + (linked.lastUpdated || '—') + '</span></div>';
             h += '<div class="rsp-dlc-row"><span class="rsp-dlc-label">Updated by</span><span class="rsp-dlc-value">' + (linked.updatedBy || '—') + '</span></div>';
             h += '</div>';
-            if (linked.usedIn && linked.usedIn.length) {
-                h += '<div class="rsp-dlc-usedin">';
-                h += '<div class="rsp-dlc-label" style="margin-bottom:6px">Used in (' + linked.usedIn.length + ')</div>';
-                h += '<div class="rsp-chips-grid">';
-                var maxShow = Math.min(linked.usedIn.length, 4);
-                for (var ui = 0; ui < maxShow; ui++) {
-                    h += '<span class="rsp-dlc-chip">' + linked.usedIn[ui] + '</span>';
-                }
-                if (linked.usedIn.length > 4) {
-                    h += '<span class="rsp-dlc-chip rsp-dlc-more">+' + (linked.usedIn.length - 4) + ' more</span>';
-                }
-                h += '</div></div>';
-            }
             h += '<div class="rsp-dlc-actions">';
             h += '<button class="rsp-dlc-btn" onclick="openDetail(\'' + linked.id + '\')">View detail</button>';
             h += '<button class="rsp-dlc-btn rsp-dlc-unlink" onclick="if(confirm(\'Unlink this dictionary entry?\')){ elementData[\'' + elId + '\'].linkedDictId=null; updateDictBadge(\'' + elId + '\',false); updateAttrPanel(); showToast(\'Dictionary link removed\'); }">Unlink</button>';
