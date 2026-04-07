@@ -468,7 +468,7 @@
         /* ===== Detail Dialog ===== */
         .detail-overlay {
             position: fixed; inset: 0; z-index: 60;
-            background: rgba(0,0,0,0.4);
+            background: transparent;
             display: none; align-items: center; justify-content: center;
         }
         .detail-overlay.open { display: flex; }
@@ -653,6 +653,11 @@
         .used-in-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
         .used-in-header-left { display: flex; align-items: center; gap: 6px; }
         .used-in-count { font-size: 12px; color: #556B82; margin-left: 4px; }
+        .used-in-search-wrap { position: relative; margin-bottom: 8px; }
+        .used-in-search-wrap svg { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+        .used-in-search { width: 100%; box-sizing: border-box; padding: 6px 10px 6px 30px; font-size: 13px; border: 1px solid #D5DCE3; border-radius: 8px; outline: none; font-family: inherit; color: #1D2D3E; background: #fff; }
+        .used-in-search:focus { border-color: #0064D9; }
+        .used-in-empty { padding: 16px; text-align: center; font-size: 13px; color: #556B82; }
         .sort-btn {
             display: flex; align-items: center; gap: 6px;
             padding: 4px 10px; font-size: 12px; color: #556B82;
@@ -887,6 +892,7 @@
         .bpmn-el:hover .bpmn-dict-badge { opacity: 1; }
         g.selected .bpmn-dict-badge { opacity: 1; }
         #badgeOverlay .bpmn-dict-badge { opacity: 1; }
+        .bpmn-dict-badge.popup-open { opacity: 1; }
         .bpmn-dict-badge .badge-bg { transition: fill 0.12s, stroke 0.12s, opacity 0.12s; }
         /* State: hover */
         .bpmn-dict-badge:hover .badge-bg[data-linked="false"] { fill: #e0e2e4; stroke: #c4c6c8; }
@@ -1052,73 +1058,80 @@
             border: none; cursor: pointer; color: #0064D9; display: flex; align-items: center;
         }
         .live-suggestions-header .btn-search:hover { background: #fff; }
-        .live-suggestions-list { overflow-y: auto; flex: 1; }
+        .live-suggestions-list { overflow-y: auto; flex: 1; padding: 8px 12px; display: flex; flex-direction: column; gap: 8px; }
         .live-suggestion-item {
-            display: flex; align-items: flex-start; gap: 10px;
-            padding: 12px 16px; border-bottom: 1px solid #f0f1f2;
-            cursor: pointer; transition: background 0.1s;
+            background: #fff; border: 1px solid #e8e8e8;
+            border-radius: 8px; padding: 12px 14px;
+            cursor: pointer; transition: box-shadow 0.15s; display: block;
         }
-        .live-suggestion-item:last-child { border-bottom: none; }
-        .live-suggestion-item:hover, .live-suggestion-item.selected { background: #EDF6FF; }
-        .live-suggestion-item .sg-content { flex: 1; min-width: 0; }
+        .live-suggestion-item:hover { box-shadow: 0 0 0 2px #0064D9, 0 2px 8px rgba(34,53,72,0.15); }
+        .live-suggestion-item.expanded { box-shadow: 0 0 0 2px #0064D9, 0 2px 8px rgba(34,53,72,0.15); }
         .live-suggestion-item .sg-name {
-            display: flex; align-items: center; gap: 8px;
-            font-size: 15px; font-weight: 600; color: #1D2D3E; margin-bottom: 4px;
+            display: flex; align-items: center; gap: 6px;
+            font-size: 14px; font-weight: 700; color: #131e29; margin-bottom: 4px;
         }
+        .live-suggestion-item .sg-name .sg-outlink {
+            color: #556B82; display: flex; flex-shrink: 0; cursor: pointer; padding: 2px; border-radius: 4px;
+        }
+        .live-suggestion-item .sg-name .sg-outlink:hover { color: #0064D9; background: #d6eaff; }
         .live-suggestion-item .sg-badge {
             font-size: 11px; font-weight: 700; color: #0064D9;
-            background: #EDF6FF; padding: 2px 6px; border-radius: 4px;
-            white-space: nowrap; flex-shrink: 0;
+            background: #EDF6FF; padding: 2px 6px; border-radius: 10px;
+            white-space: nowrap; flex-shrink: 0; border: 1px solid #b0d0f8;
         }
         .live-suggestion-item .sg-type {
             display: flex; align-items: center; gap: 6px;
-            font-size: 13px; color: #556B82; margin-bottom: 3px;
+            font-size: 13px; color: #131e29; margin-bottom: 3px;
         }
         .live-suggestion-item .sg-type .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-        .live-suggestion-item .sg-desc {
-            font-size: 13px; color: #556B82; margin-bottom: 3px;
-            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        .live-suggestion-item .sg-desc { font-size: 13px; color: #556B82; line-height: 1.4; }
+        .live-suggestion-item .sg-details {
+            display: none; margin-top: 10px; padding-top: 10px;
+            border-top: 1px solid #e8e8e8; flex-direction: column; gap: 6px;
         }
-        .live-suggestion-item .sg-updated { font-size: 12px; color: #8696a9; }
+        .live-suggestion-item.expanded .sg-details { display: flex; }
+        .live-suggestion-item.expanded .bp-card-actions { display: flex; }
         .live-suggestion-item .sg-actions {
-            display: flex; align-items: center; gap: 4px; flex-shrink: 0; padding-top: 4px;
+            display: none; margin-top: 10px; padding-top: 10px;
+            border-top: 1px solid #e8e8e8; gap: 10px;
         }
-        .live-suggestion-item .sg-actions button {
+        .live-suggestion-item.expanded .sg-actions { display: flex; }
+        .live-suggestions-explore {
+            padding: 10px 14px;
+            background: #fff; border: 1px solid #e8e8e8; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            font-size: 13px; font-weight: 700; color: #0064D9;
+            cursor: pointer; font-family: inherit;
+            transition: box-shadow 0.15s;
+        }
+        .live-suggestions-explore:hover { box-shadow: 0 0 0 2px #0064D9; }
+        .live-suggestions-header .btn-search {
             padding: 6px; border-radius: 8px; background: transparent;
             border: none; cursor: pointer; color: #0064D9; display: flex; align-items: center;
         }
-        .live-suggestion-item .sg-actions button:hover { background: #EDF6FF; }
-        .live-suggestions-footer {
-            padding: 10px; border-top: 1px solid #e8e8e8;
-            display: flex; align-items: center; justify-content: center; gap: 6px;
-            font-size: 14px; font-weight: 600; color: #0064D9;
-            cursor: pointer; background: transparent; border: none; width: 100%;
-            border-radius: 0 0 11px 11px; font-family: inherit;
-        }
-        .live-suggestions-footer:hover { background: #EDF6FF; }
+        .live-suggestions-header .btn-search:hover { background: #fff; }
 
         /* Badge popup (unlinked badge click) */
         .badge-popup {
             position: fixed; z-index: 58;
-            background: #fff; border: 1px solid #d9d9d9;
-            border-radius: 16px;
-            box-shadow: 0 12px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06);
-            width: 380px;
-            max-height: min(520px, calc(100vh - 40px));
+            background: #fff; border: none;
+            border-radius: 12px;
+            box-shadow: 0 0 2px 0 rgba(34,53,72,0.2), 0 2px 4px 0 rgba(34,53,72,0.2);
+            width: 400px;
+            max-height: min(560px, calc(100vh - 40px));
             display: none; flex-direction: column;
             font-family: '72','72full',Arial,Helvetica,sans-serif;
+            overflow: hidden;
         }
         .badge-popup.open { display: flex; }
         .badge-popup-header {
-            padding: 16px 16px 8px;
-            display: flex; justify-content: space-between; align-items: flex-start;
+            padding: 12px 16px 8px;
+            background: #fff;
+            display: flex; justify-content: space-between; align-items: center;
+            border-radius: 12px 12px 0 0;
         }
-        .badge-popup-header .bp-htext { flex: 1; }
         .badge-popup-header .bp-title {
-            font-size: 17px; font-weight: 700; color: #1D2D3E; margin-bottom: 4px;
-        }
-        .badge-popup-header .bp-subtitle {
-            font-size: 13px; color: #556B82; line-height: 1.4;
+            font-size: 16px; font-weight: 700; color: #131e29; line-height: 1;
         }
         .badge-popup-header .bp-close {
             width: 28px; height: 28px; border-radius: 6px; border: none;
@@ -1126,102 +1139,127 @@
             display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
         .badge-popup-header .bp-close:hover { background: #f0f1f2; }
+        .badge-popup-body {
+            display: flex; flex-direction: column; gap: 16px;
+            padding: 4px 16px 16px; flex: 1; min-height: 0;
+        }
+        .bp-subtitle {
+            font-size: 14px; color: #556B82; line-height: 1.4;
+        }
         .badge-popup-search {
-            padding: 0 16px 8px;
+            padding: 0;
         }
         .badge-popup-search input {
-            width: 100%; padding: 9px 12px 9px 36px;
-            border: 1px solid #d9d9d9; border-radius: 10px;
-            font-size: 13px; color: #1D2D3E; font-family: inherit;
-            background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") 12px center no-repeat;
+            width: 100%; padding: 8px 36px 8px 8px;
+            border: none; border-radius: 18px;
+            font-size: 14px; font-style: italic; color: #556B82; font-family: inherit;
+            background: #eff1f2 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23556B82' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") calc(100% - 10px) center no-repeat;
             outline: none; box-sizing: border-box;
+            box-shadow: inset 0 0 0 1px rgba(85,107,129,0.25);
         }
-        .badge-popup-search input:focus { border-color: #0064D9; }
+        .badge-popup-search input:focus { box-shadow: inset 0 0 0 2px #0064D9; }
+        .badge-popup-search input:not(:placeholder-shown) { font-style: normal; color: #131e29; }
         .badge-popup-section-label {
             padding: 0 16px 6px; display: flex; align-items: center; gap: 6px;
             font-size: 12px; font-weight: 600; color: #556B82;
             border-bottom: 1px solid #e8e8e8; margin: 0 0 2px;
         }
         .badge-popup-list {
-            overflow-y: auto; flex: 1; min-height: 0; padding: 8px 16px;
+            overflow-y: auto; flex: 1; min-height: 0; padding: 4px 2px;
+            display: flex; flex-direction: column; gap: 8px;
+            scrollbar-width: none;
         }
+        .badge-popup-list::-webkit-scrollbar { display: none; }
         .badge-popup-card {
-            border: 1px solid #d9d9d9; border-radius: 12px;
-            padding: 10px 14px; margin-bottom: 6px;
-            cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s;
+            background: #fff;
+            border-radius: 16px;
+            padding: 16px;
+            cursor: pointer; transition: box-shadow 0.15s;
+            box-shadow: 0 0 2px 0 rgba(34,53,72,0.2), 0 2px 4px 0 rgba(34,53,72,0.2);
+            display: flex; flex-direction: column; gap: 8px;
         }
         .badge-popup-card:last-child { margin-bottom: 0; }
-        .badge-popup-card:hover { border-color: #0064D9; box-shadow: 0 0 0 1px #0064D9; }
-        .badge-popup-card.expanded { border-color: #0064D9; box-shadow: 0 0 0 1px #0064D9; }
+        .badge-popup-card:hover { box-shadow: 0 0 0 2px #0064D9, 0 2px 8px rgba(34,53,72,0.15); }
+        .badge-popup-card.expanded { box-shadow: 0 0 0 2px #0064D9, 0 2px 8px rgba(34,53,72,0.15); }
         .badge-popup-card .bp-card-name {
-            display: flex; align-items: center; gap: 8px;
-            font-size: 14px; font-weight: 600; color: #1D2D3E; margin-bottom: 6px;
+            display: flex; align-items: center; gap: 6px;
+            font-size: 16px; font-weight: 700; color: #131e29;
         }
-        .badge-popup-card .bp-card-name .bp-ext-link { color: #999; display: flex; }
+        .badge-popup-card .bp-card-name .bp-ext-link { color: #556B82; display: flex; flex-shrink: 0; }
         .badge-popup-card .bp-card-name .bp-best-match {
-            font-size: 11px; font-weight: 600; color: #0064D9;
-            background: #EDF6FF; padding: 2px 8px; border-radius: 4px;
-            white-space: nowrap;
+            font-size: 14px; font-weight: 600; color: #0064D9;
+            background: #EDF6FF; padding: 2px 8px; border-radius: 10px;
+            white-space: nowrap; border: 1px solid #b0d0f8;
         }
         .badge-popup-card .bp-card-type {
             display: flex; align-items: center; gap: 6px;
-            font-size: 14px; color: #556B82; margin-bottom: 4px;
+            font-size: 14px; color: #131e29; flex-wrap: wrap;
         }
         .badge-popup-card .bp-card-type .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .badge-popup-card .bp-card-type .bp-breadcrumb-sep { color: #556B82; font-size: 12px; }
         .badge-popup-card .bp-card-desc {
-            font-size: 14px; color: #6b7280; line-height: 1.4;
+            font-size: 14px; color: #556B82; line-height: 1.4;
         }
         /* Expanded card details */
         .bp-card-details {
-            display: none; margin-top: 12px; padding-top: 10px;
+            display: none; margin-top: 12px; padding-top: 12px;
+            border-top: 1px solid #e8e8e8;
+            flex-direction: column; gap: 8px;
         }
-        .badge-popup-card.expanded .bp-card-details { display: block; }
+        .badge-popup-card.expanded .bp-card-details { display: flex; }
         .bp-detail-row {
-            display: flex; align-items: baseline; padding: 5px 0; font-size: 14px;
+            display: flex; align-items: center; gap: 4px; font-size: 14px;
         }
-        .bp-detail-label { color: #556B82; font-weight: 600; width: 120px; flex-shrink: 0; }
-        .bp-detail-value { color: #1D2D3E; flex: 1; }
-        .bp-detail-value a { color: #0064D9; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+        .bp-detail-label { color: #131e29; font-weight: 700; width: 128px; flex-shrink: 0; }
+        .bp-detail-value { color: #131e29; flex: 1; }
+        .bp-detail-value a { color: #0064d9; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
         .bp-detail-value a:hover { text-decoration: underline; }
         .bp-card-actions {
-            display: none; margin-top: 14px; padding-top: 14px;
+            display: none; margin-top: 12px; padding-top: 12px;
             border-top: 1px solid #e8e8e8;
-            gap: 8px;
+            gap: 12px;
         }
         .bp-links-section {
-            display: flex; flex-direction: column; gap: 4px; margin-top: 8px;
+            display: flex; flex-direction: column; gap: 4px;
         }
         .bp-doc-link {
             display: inline-flex; align-items: center; gap: 5px;
-            font-size: 14px; color: #0064D9; text-decoration: none;
+            font-size: 14px; color: #0064d9; text-decoration: none;
         }
         .bp-doc-link:hover { text-decoration: underline; }
         .badge-popup-card.expanded .bp-card-actions { display: flex; }
         .bp-card-actions button {
-            flex: 1; padding: 10px 12px; border-radius: 10px;
-            font-size: 14px; font-weight: 500; cursor: pointer;
-            font-family: inherit; transition: background 0.15s;
-        }
-        .bp-action-details {
-            background: #fff; border: 1px solid #d9d9d9; color: #1D2D3E;
-        }
-        .bp-action-details:hover { background: #f0f1f2; }
-        .bp-action-link {
-            background: #fff; border: 1px solid #d9d9d9; color: #1D2D3E;
+            flex: 1; height: 2.25rem; padding: 0 0.75rem; border-radius: 0.5rem;
+            font-size: 14px; font-weight: 700; cursor: pointer;
+            font-family: inherit; transition: background 0.1s, border-color 0.1s, color 0.1s;
             display: inline-flex; align-items: center; justify-content: center; gap: 6px;
         }
-        .bp-action-link:hover { background: #f0f1f2; }
+        .bp-action-details {
+            background: #fff; border: 1px solid #bfbfbf; color: #131e29;
+        }
+        .bp-action-details:hover { background: #f5f6f7; border-color: #bfbfbf; }
+        .bp-action-link {
+            background: #0070f2; border: 1px solid #0070f2; color: #fff;
+        }
+        .bp-action-link:hover { background: #0064d9; border-color: #0064d9; }
+        .bp-action-link:active { background: #fff; border-color: #0070f2; color: #0070f2; }
         .badge-popup-footer {
-            padding: 10px 16px; border-top: 1px solid #e8e8e8;
+            padding: 0; border-top: none;
             display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;
         }
         .badge-popup-footer button {
-            width: 100%; padding: 9px; border: none; border-radius: 10px;
-            background: #0064D9; color: #fff; font-size: 13px; font-weight: 600;
-            font-family: inherit; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 6px;
+            width: 100%; padding: 0 0.5625rem; height: 2.25rem; border: 1px solid #0070f2;
+            border-radius: 0.5rem; background: #0070f2; color: #fff;
+            font-size: 0.875rem; font-weight: 700; font-family: inherit;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            gap: 0.375rem; transition: background 0.1s, border-color 0.1s, color 0.1s;
         }
-        .badge-popup-footer button:hover { background: #0054b6; }
+        .badge-popup-footer button:hover { background: #0064d9; border-color: #0064d9; }
+        .badge-popup-footer button:active { background: #fff; border-color: #0070f2; color: #0070f2; }
+        .badge-popup-footer button:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 0.1875rem #fff, 0 0 0 0.3125rem #0032a5;
+        }
         .badge-popup-footer .bp-cancel-btn {
             background: #fff; color: #1D2D3E; border: 1px solid #d9d9d9;
         }
@@ -1230,56 +1268,65 @@
         /* Linked badge popup */
         .linked-popup {
             position: fixed; z-index: 58;
-            background: #fff; border: 1px solid #d9d9d9;
+            background: #fff;
             border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);
-            width: 300px;
+            box-shadow: 0 0 2px 0 rgba(34,53,72,0.2), 0 2px 4px 0 rgba(34,53,72,0.2);
+            width: 353px;
             display: none; flex-direction: column;
             font-family: '72','72full',Arial,Helvetica,sans-serif;
+            overflow: hidden;
         }
         .linked-popup.open { display: flex; }
         .linked-popup-header {
-            padding: 14px 16px; border-bottom: 1px solid #e8e8e8;
-            display: flex; align-items: center; gap: 12px;
+            padding: 12px 16px; border-bottom: 1px solid #d9d9d9;
+            display: flex; align-items: flex-start; gap: 8px;
         }
+        .linked-popup-icon-text { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
         .linked-popup-icon {
-            width: 40px; height: 40px; border-radius: 10px;
+            width: 48px; height: 48px; border-radius: 12px;
             background: #EDF6FF; display: flex; align-items: center; justify-content: center;
             flex-shrink: 0;
         }
-        .linked-popup-info { flex: 1; min-width: 0; }
-        .linked-popup-label { font-size: 11px; color: #556B82; margin-bottom: 2px; }
-        .linked-popup-name { font-size: 14px; font-weight: 600; color: #1D2D3E; }
-        .linked-popup-type { font-size: 12px; color: #556B82; }
+        .linked-popup-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+        .linked-popup-label { font-size: 12px; color: #556B82; line-height: normal; }
+        .linked-popup-name { font-size: 16px; font-weight: 700; color: #131e29; line-height: normal; }
+        .linked-popup-type { font-size: 12px; color: #131e29; display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; overflow: hidden; }
+        .linked-popup-type span:not(.lp-dot):not(.lp-sep) { white-space: nowrap; }
+        .linked-popup-type .lp-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .linked-popup-type .lp-sep { color: #131e29; flex-shrink: 0; }
         .linked-popup-close {
             width: 28px; height: 28px; border-radius: 6px;
             border: none; background: transparent; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            color: #556B82; flex-shrink: 0; align-self: flex-start;
+            color: #556B82; flex-shrink: 0; align-self: flex-start; margin-top: -2px;
         }
         .linked-popup-close:hover { background: #f0f1f2; }
-        .linked-popup-actions { padding: 4px 0; }
+        .linked-popup-actions { padding: 0; display: flex; flex-direction: column; }
         .linked-popup-action {
-            display: flex; align-items: center; gap: 10px;
-            padding: 10px 16px; cursor: pointer; border: none;
+            display: flex; align-items: center; gap: 4px;
+            padding: 0 16px; height: 40px; cursor: pointer; border: none;
             background: transparent; width: 100%;
-            font-size: 13px; color: #1D2D3E; font-family: inherit;
-            transition: background 0.1s;
+            font-size: 14px; color: #131e29; font-family: inherit;
+            transition: background 0.1s; text-align: left; box-sizing: border-box;
         }
+        .linked-popup-action.go-to-dict { height: 40px; color: #131e29; }
+        .linked-popup-action .lp-action-label { flex: none; }
         .linked-popup-action:hover { background: #f5f6f7; }
         .linked-popup-action svg { flex-shrink: 0; }
-        .linked-popup-divider { height: 1px; background: #e8e8e8; margin: 0 16px; }
-        .linked-popup-action.danger { color: #d32f2f; }
-        .linked-popup-action.danger:hover { background: #fef2f2; }
+        .linked-popup-divider { display: none; }
+        .linked-popup-footer { border-top: 1px solid #d9d9d9; height: 44px; overflow: hidden; display: flex; align-items: center; }
+        .linked-popup-footer .linked-popup-action { height: 44px; }
+        .linked-popup-action.danger { color: #aa0808; }
+        .linked-popup-action.danger:hover { background: #fff0f0; }
 
         /* Drop zone highlight */
-        .canvas-drop-active { outline: 2px dashed #2563eb; outline-offset: -2px; background: rgba(37,99,235,0.03); }
+        .canvas-drop-active { background: rgba(37,99,235,0.01); }
         .canvas-drop-banner {
             position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 40;
             display: none; white-space: nowrap; pointer-events: none;
             /* Figma MessageStrip style */
             background: #e1f4ff; border: 1px solid #7bcfff; border-radius: 8px;
-            padding: 5px 4px 5px 12px;
+            padding: 5px 12px 5px 12px;
             display: none; align-items: center; gap: 6px;
             font-family: '72', Arial, Helvetica, sans-serif;
             font-size: 14px; color: #131e29; line-height: 21px;
@@ -1318,9 +1365,11 @@
             border-radius: 4px; margin-top: 1px;
         }
         .dict-guide-close:hover { background: rgba(0,0,0,0.06); }
+        .bpmn-el[data-el-type="lane"] > rect:not(.selection-box) { fill: #ffffff; }
         .bpmn-el.drop-target > .bpmn-task,
-        .bpmn-el.drop-target > .bpmn-gateway-bg,
-        .bpmn-el.drop-target > circle.bpmn-event-outer,
+        .bpmn-el[data-el-type="gateway"].drop-target > svg > path:first-child,
+        .bpmn-el[data-el-type="event"].drop-target > svg > path,
+        .bpmn-el[data-el-type="event"].drop-target > circle.bpmn-event,
         .bpmn-el.drop-target > rect.bpmn-system-body {
             stroke: #0064D9 !important; stroke-width: 3 !important; stroke-dasharray: 6 3;
         }
@@ -1328,8 +1377,9 @@
             stroke: #0064D9 !important; stroke-width: 3 !important; stroke-dasharray: 6 3;
         }
         .bpmn-el.drop-target-invalid > .bpmn-task,
-        .bpmn-el.drop-target-invalid > .bpmn-gateway-bg,
-        .bpmn-el.drop-target-invalid > circle.bpmn-event-outer,
+        .bpmn-el[data-el-type="gateway"].drop-target-invalid > svg > path:first-child,
+        .bpmn-el[data-el-type="event"].drop-target-invalid > svg > path,
+        .bpmn-el[data-el-type="event"].drop-target-invalid > circle.bpmn-event,
         .bpmn-el.drop-target-invalid > rect.bpmn-system-body {
             stroke: #CC1919 !important; stroke-width: 3 !important; stroke-dasharray: 6 3;
         }
@@ -1593,6 +1643,32 @@
             display: flex; align-items: center; justify-content: center;
         }
         .rsp-chip-value .chip-x:hover { color: #1D2D3E; }
+
+        /* Attr add inline input */
+        .attr-add-wrap { margin-top: 6px; position: relative; }
+        .attr-add-input {
+            width: 100%; box-sizing: border-box;
+            padding: 5px 10px; border: 1.5px solid #0064D9; border-radius: 6px;
+            font-size: 13px; font-family: inherit; outline: none; color: #1D2D3E;
+        }
+        .attr-add-input::placeholder { color: #8c9bab; }
+        .attr-add-dropdown {
+            display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+            background: #fff; border: 1px solid #d9d9d9; border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 200; max-height: 220px; overflow-y: auto;
+        }
+        .attr-add-suggestion {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 12px; cursor: pointer; font-size: 13px; color: #1D2D3E;
+        }
+        .attr-add-suggestion:hover { background: #f5f6f7; }
+        .attr-add-hint {
+            padding: 6px 12px 8px; font-size: 11px; color: #8c9bab;
+            border-top: 1px solid #f0f0f0; margin-top: 2px;
+        }
+        /* Linked chip variant */
+        .rsp-chip-linked { border-color: #b0d0f8; background: #f4f9ff; }
+        .rsp-chip-linked .chip-dict-icon { color: #0064D9; width: 10px; height: 10px; flex-shrink: 0; }
 
         /* Toggle switch */
         .rsp-toggle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
@@ -1882,7 +1958,7 @@
     <div class="dict-guide-strip" id="dictGuideStrip">
         <div class="strip-icon-wrap">
             <div class="strip-icon">
-                <img src="https://www.figma.com/api/mcp/asset/8b1c84a7-e57c-4161-80a2-1b722a261f97" alt="">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="7.25" stroke="#0064D9" stroke-width="1.5"/><rect x="7.25" y="7" width="1.5" height="5" rx="0.75" fill="#0064D9"/><rect x="7.25" y="4" width="1.5" height="1.5" rx="0.75" fill="#0064D9"/></svg>
             </div>
         </div>
         <div class="strip-text-wrap">
@@ -1934,7 +2010,7 @@
 </div>
 
 <!-- ===== Detail Dialog ===== -->
-<div class="detail-overlay" id="detailOverlay" onclick="closeDetail()">
+<div class="detail-overlay" id="detailOverlay" onclick="if(event.target===this){closeDetail();event.stopPropagation();}">
     <div class="detail-dialog" onclick="event.stopPropagation()">
         <div class="detail-dialog-header">
             <h3>Dictionary Details</h3>
@@ -2050,7 +2126,7 @@
 <!-- ===== Canvas Area ===== -->
 <div class="canvas-area" id="canvasArea" ondragover="handleCanvasDragOver(event)" ondragleave="handleCanvasDragLeave(event)" ondrop="handleCanvasDrop(event)">
     <div class="canvas-drop-banner" id="dropBanner">
-        <img src="https://www.figma.com/api/mcp/asset/874ca621-f422-4ca2-aef8-8e2c3344a9b8" width="16" height="16" style="flex-shrink:0" alt="">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><circle cx="8" cy="8" r="7.25" stroke="#0064D9" stroke-width="1.5"/><rect x="7.25" y="7" width="1.5" height="5" rx="0.75" fill="#0064D9"/><rect x="7.25" y="4" width="1.5" height="1.5" rx="0.75" fill="#0064D9"/></svg>
         <span>Drag items onto the canvas to add them, or drop onto an existing element to link it to a Dictionary entry</span>
     </div>
     <svg class="canvas-svg" id="canvasSvg" viewBox="-311 -111 2286 786">
@@ -2059,6 +2135,8 @@
                 <path d="M0.391 0.293C0.781 -0.098 1.414 -0.097 1.805 0.293L8.169 6.657C8.559 7.048 8.559 7.681 8.169 8.071L1.805 14.435C1.414 14.826 0.781 14.826 0.391 14.435C0 14.045 0 13.412 0.391 13.021L5.562 7.85C5.481 7.706 5.435 7.541 5.435 7.364C5.435 7.187 5.481 7.022 5.562 6.878L0.391 1.707C0 1.316 0 0.683 0.391 0.293Z" class="bpmn-arrowhead"/>
             </marker>
         </defs>
+        <!-- Lanes layer: always behind all BPMN elements -->
+        <g id="svgLanesLayer"></g>
 
         <!-- ===== Start Event: Application received ===== -->
         <g id="el-start" class="bpmn-el" data-el-type="event" data-el-subtype="Start Event">
@@ -2468,11 +2546,6 @@
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 2h5v5H2V2zm7 0h5v5H9V2zM2 9h5v5H2V9zm7 0h5v5H9V9z" stroke="#0057D2" stroke-width="1.2" fill="none"/></svg>
             </div>
             <span class="rsp-header-title">Diagram Attributes</span>
-            <div class="rsp-header-actions">
-                <button class="rsp-header-btn rsp-dict-outlink" id="rspDictOutlink" title="Go to Dictionary" style="display:none;" onclick="goToDictionaryFromPanel()">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#0064D9" stroke-width="1.2"><path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1v-3"/><path d="M9 1h6v6"/><path d="M15 1L7 9"/></svg>
-                </button>
-            </div>
             <div class="rsp-separator"></div>
             <button class="rsp-close-btn" onclick="toggleAttrPanel()" title="Close">
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#0064D9" stroke-width="1.5"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg>
@@ -2576,45 +2649,42 @@
 <!-- ===== Badge Popup (unlinked badge click) ===== -->
 <div id="badgePopup" class="badge-popup">
     <div class="badge-popup-header">
-        <div class="bp-htext">
-            <div class="bp-title">Link to Dictionary</div>
-            <div class="bp-subtitle">This element is not linked. Select an item below or create a new one.</div>
-        </div>
+        <div class="bp-title">Link to Dictionary</div>
         <button class="bp-close" onclick="closeBadgePopup()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
     </div>
-    <div class="badge-popup-search">
-        <input type="text" placeholder="Search dictionary entries..." id="badgePopupSearch" oninput="filterBadgePopup(this.value)"/>
-    </div>
-    <div class="badge-popup-section-label">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 0L9.5 5.5L15 4L10.5 8L15 12L9.5 10.5L8 16L6.5 10.5L1 12L5.5 8L1 4L6.5 5.5L8 0Z" fill="#556B82" opacity="0.7"/></svg>
-        Suggested matches
-    </div>
-    <div class="badge-popup-list" id="badgePopupList"></div>
-    <div class="badge-popup-footer">
-        <button onclick="badgePopupCreateNew()">+ Create new Dictionary item</button>
+    <div class="badge-popup-body">
+        <div class="bp-subtitle">This element is not linked. Select an item below or create a new one.</div>
+        <div class="badge-popup-search">
+            <input type="text" placeholder="Search dictionary entries..." id="badgePopupSearch" oninput="filterBadgePopup(this.value)"/>
+        </div>
+        <div class="badge-popup-list" id="badgePopupList"></div>
+        <div class="badge-popup-footer">
+            <button onclick="badgePopupCreateNew()">Create new Dictionary item</button>
+        </div>
     </div>
 </div>
 
 <!-- ===== Linked Badge Popup ===== -->
 <div id="linkedPopup" class="linked-popup">
     <div class="linked-popup-header">
-        <div class="linked-popup-icon" id="linkedPopupIcon">
-        </div>
-        <div class="linked-popup-info">
-            <div class="linked-popup-label">Linked Dictionary Item</div>
-            <div class="linked-popup-name" id="linkedPopupName"></div>
-            <div class="linked-popup-type" id="linkedPopupType"></div>
+        <div class="linked-popup-icon-text">
+            <div class="linked-popup-icon" id="linkedPopupIcon"></div>
+            <div class="linked-popup-info">
+                <div class="linked-popup-label">Linked Dictionary Item</div>
+                <div class="linked-popup-name" id="linkedPopupName"></div>
+                <div class="linked-popup-type" id="linkedPopupType"></div>
+            </div>
         </div>
         <button class="linked-popup-close" onclick="closeLinkedPopup()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
     </div>
     <div class="linked-popup-actions">
-        <button class="linked-popup-action" onclick="linkedPopupGoToDictionary()">
-            Go to Dictionary
-            <svg width="12" height="12" viewBox="0 0 12.8 12.8" fill="#556B82" style="margin-left:4px;"><path d="M2.4 1.6C1.95817 1.6 1.6 1.95817 1.6 2.4V10.4C1.6 10.8418 1.95817 11.2 2.4 11.2H10.4C10.8418 11.2 11.2 10.8418 11.2 10.4V7.2H12.8V10.4C12.8 11.7255 11.7255 12.8 10.4 12.8H2.4C1.07452 12.8 0 11.7255 0 10.4V2.4C0 1.07452 1.07452 0 2.4 0H5.6V1.6H2.4ZM7.2 0H12.8V5.6H11.2V2.73137L6.16569 7.76569L5.03431 6.63431L10.0686 1.6H7.2V0Z"/></svg>
+        <button class="linked-popup-action go-to-dict" onclick="linkedPopupGoToDictionary()">
+            <span class="lp-action-label">Go to Dictionary</span>
+            <svg width="12" height="12" viewBox="0 0 12.8 12.8" fill="#0064d9"><path d="M2.4 1.6C1.95817 1.6 1.6 1.95817 1.6 2.4V10.4C1.6 10.8418 1.95817 11.2 2.4 11.2H10.4C10.8418 11.2 11.2 10.8418 11.2 10.4V7.2H12.8V10.4C12.8 11.7255 11.7255 12.8 10.4 12.8H2.4C1.07452 12.8 0 11.7255 0 10.4V2.4C0 1.07452 1.07452 0 2.4 0H5.6V1.6H2.4ZM7.2 0H12.8V5.6H11.2V2.73137L6.16569 7.76569L5.03431 6.63431L10.0686 1.6H7.2V0Z"/></svg>
         </button>
         <button class="linked-popup-action" onclick="linkedPopupViewDetails()">
             View Details
@@ -2622,9 +2692,10 @@
         <button class="linked-popup-action" onclick="linkedPopupReplace()">
             Replace with another item
         </button>
-        <div class="linked-popup-divider"></div>
+    </div>
+    <div class="linked-popup-footer">
         <button class="linked-popup-action danger" onclick="linkedPopupUnlink()">
-            Unlink from Dictionary
+            Unlink from dictionary
         </button>
     </div>
 </div>
@@ -2712,6 +2783,7 @@ const dictionaryItems = [
     { id:'d77', name:'Interview Feedback Collection', type:'Activities', elementType:'task', usageCount:5, description:'Gather and consolidate interviewer feedback and scores', version:'1.2', lastUpdated:'13.03.2026', status:'published', updatedBy:'Lisa Wang', usedIn:['Recruitment Process','Interview Assessment','Hiring Decision'] },
     { id:'d78', name:'Send offer letter', type:'Activities', elementType:'task', usageCount:4, description:'Generate and dispatch formal offer letter to candidate', version:'1.0', lastUpdated:'10.03.2026', status:'published', updatedBy:'Sarah Chen', usedIn:['Recruitment Process','Offer Management'] },
     { id:'d79', name:'Send reminder', type:'Activities', elementType:'task', usageCount:8, description:'Send follow-up reminder email or notification', version:'2.0', lastUpdated:'07.03.2026', status:'published', updatedBy:'Alex Turner', usedIn:['Task Management','Approval Workflow','Deadline Tracking'] },
+    { id:'d98', name:'Send interview invitation', type:'Activities', elementType:'task', usageCount:7, description:'Send interview invitation to shortlisted candidate', version:'1.2', lastUpdated:'06.03.2026', status:'published', updatedBy:'Sarah Chen', dictOnly:true, usedIn:['Recruitment Process','Interview Scheduling','Hiring Pipeline'] },
     { id:'d80', name:'Make hiring decision', type:'Activities', elementType:'task', usageCount:5, description:'Final decision on whether to extend offer to candidate', version:'1.0', lastUpdated:'12.03.2026', status:'published', updatedBy:'HR Manager', usedIn:['Recruitment Process','Hiring Pipeline'] },
     { id:'d81', name:'Onboard new employee', type:'Activities', elementType:'task', usageCount:6, description:'Set up accounts, equipment, and orientation for new hire', version:'1.5', lastUpdated:'14.03.2026', status:'published', updatedBy:'Lisa Wang', usedIn:['Onboarding Process','Employee Lifecycle'] },
     { id:'d82', name:'Plan assessment center', type:'Activities', elementType:'task', usageCount:3, description:'Organize group assessment activities for candidates', version:'1.0', lastUpdated:'08.03.2026', status:'draft', updatedBy:'Sarah Chen', usedIn:['Recruitment Process','Assessment Center'] },
@@ -2764,9 +2836,9 @@ const typeConfig = {
 };
 
 const statusConfig = {
-    published: { label: 'Published', color: 'color:#16a34a;background:#f0fdf4' },
-    draft:     { label: 'Draft',     color: 'color:#ca8a04;background:#fefce8' },
-    outdated:  { label: 'Outdated',  color: 'color:#ef4444;background:#fef2f2' },
+    published: { label: 'Published', color: 'color:#16a34a;background:#f0fdf4', chipColor: 'color:#256f3a;background:#bae8bc;border:1px solid #bae8bc' },
+    draft:     { label: 'Draft',     color: 'color:#ca8a04;background:#fefce8', chipColor: 'color:#ca8a04;background:#fefce8;border:1px solid #fde68a' },
+    outdated:  { label: 'Outdated',  color: 'color:#ef4444;background:#fef2f2', chipColor: 'color:#ef4444;background:#fef2f2;border:1px solid #fecaca' },
 };
 
 // ===== State =====
@@ -2774,8 +2846,12 @@ let activeFilter = 'all';
 let activeCategoryFilter = null; // null = all types, 'Organizational Units' = type, 'Organizational Units::Management' = sub
 let activeCategoryPillLabel = null;
 let activeAttributeFilters = []; // e.g. ['published','draft']
+let activePublishStatusFilter = null;
+let collapsedCategoryTypes = new Set();
+let attrAdditions = {}; // { 'el-id::attr-key': [{text, dictId}] }
+var _attrAddBtn = null;
 let activeSortOrder = 'newest'; // 'newest' or 'oldest' or 'az' or 'za'
-let currentPopoverType = null; // 'category','attributes','sort'
+let currentPopoverType = null; // 'category','attributes','sort','publish-status'
 let popoverTempSelection = null; // temp state while popover is open
 let isDictOpen = false;
 var dictOpenedFromLiveSuggestion = false;
@@ -2944,12 +3020,30 @@ function closeDictionary() {
     cancelApply();
 }
 
+// Close dictionary when clicking outside it
+document.addEventListener('mousedown', function(e) {
+    if (!isDictOpen) return;
+    // Don't close dict panel when interacting with the filter popover
+    if (e.target.id === 'filterPopoverOverlay') return;
+    var filterPopover = document.getElementById('filterPopover');
+    if (filterPopover && filterPopover.contains(e.target)) return;
+    // Don't close dict panel when clicking the detail dialog overlay
+    var detailOverlay = document.getElementById('detailOverlay');
+    if (detailOverlay && detailOverlay.classList.contains('open')) return;
+    var panel = document.getElementById('dictPanel');
+    var btnDict = document.getElementById('btnDict');
+    if (!panel.contains(e.target) && !btnDict.contains(e.target)) {
+        closeDictionary();
+    }
+});
+
 function resetDictPanel() {
     // Clear search and filters
     document.getElementById('dictSearchInput').value = '';
     activeCategoryFilter = null;
     activeFilter = null;
     activeAttributeFilters = [];
+    activePublishStatusFilter = null;
     activeSortOrder = 'newest';
     // Restore guide strip
     var strip = document.getElementById('dictGuideStrip');
@@ -2971,6 +3065,8 @@ function renderPills() {
     const allActive = !activeCategoryFilter && activeAttributeFilters.length === 0;
     const catActive = !!activeCategoryFilter;
     const attrActive = activeAttributeFilters.length > 0;
+    const psActive = !!activePublishStatusFilter;
+    const psLabel = activePublishStatusFilter ? (statusConfig[activePublishStatusFilter]?.label || activePublishStatusFilter) : 'Status';
     const sortLabel = activeSortOrder === 'newest' ? 'Last Updated' : activeSortOrder === 'oldest' ? 'Oldest First' : activeSortOrder === 'az' ? 'A → Z' : 'Z → A';
 
     container.innerHTML = `
@@ -2979,6 +3075,9 @@ function renderPills() {
         </button>
         <button class="pill ${attrActive ? 'chip-selected' : 'chip-default'}" onclick="openFilterPopover('attributes', this)">
             ${attrActive ? 'Attributes (' + activeAttributeFilters.length + ')' : 'Attributes'} ${chevron}
+        </button>
+        <button class="pill ${psActive ? 'chip-selected' : 'chip-default'}" onclick="openFilterPopover('publish-status', this)">
+            ${psLabel} ${chevron}
         </button>
         <button class="pill chip-default" onclick="openFilterPopover('sort', this)">
             ${sortLabel} ${chevron}
@@ -2993,6 +3092,7 @@ function clearAllFilters() {
     activeCategoryFilter = null;
     activeCategoryPillLabel = null;
     activeAttributeFilters = [];
+    activePublishStatusFilter = null;
     activeFilter = 'all';
     renderPills();
     filterDictionary();
@@ -3040,6 +3140,11 @@ function openFilterPopover(type, btnEl) {
         searchWrap.style.display = 'none';
         popoverTempSelection = activeSortOrder;
         renderSortList();
+    } else if (type === 'publish-status') {
+        titleEl.textContent = 'Status';
+        searchWrap.style.display = 'none';
+        popoverTempSelection = activePublishStatusFilter;
+        renderPublishStatusList();
     }
 
     overlay.style.display = 'block';
@@ -3062,6 +3167,9 @@ function clearCurrentFilter() {
     } else if (currentPopoverType === 'sort') {
         popoverTempSelection = 'newest';
         renderSortList();
+    } else if (currentPopoverType === 'publish-status') {
+        popoverTempSelection = null;
+        renderPublishStatusList();
     }
 }
 
@@ -3079,6 +3187,8 @@ function applyFilterPopover() {
         activeAttributeFilters = popoverTempSelection;
     } else if (currentPopoverType === 'sort') {
         activeSortOrder = popoverTempSelection;
+    } else if (currentPopoverType === 'publish-status') {
+        activePublishStatusFilter = popoverTempSelection;
     }
     closeFilterPopover();
     renderPills();
@@ -3091,6 +3201,12 @@ function filterPopoverList() {
     } else if (currentPopoverType === 'attributes') {
         renderAttributeList();
     }
+}
+
+function toggleCategoryCollapse(t, q) {
+    if (collapsedCategoryTypes.has(t)) collapsedCategoryTypes.delete(t);
+    else collapsedCategoryTypes.add(t);
+    renderCategoryList(q);
 }
 
 function renderCategoryList(query) {
@@ -3123,24 +3239,35 @@ function renderCategoryList(query) {
 
         if (!typeMatches && matchingSubs.length === 0) return;
 
-        // Type header row
+        var isCollapsed = !q && collapsedCategoryTypes.has(t);
         var tChecked = popoverTempSelection === t ? 'checked' : '';
         var tSelClass = popoverTempSelection === t ? ' selected' : '';
-        html += '<div class="filter-popover-item' + tSelClass + '" onclick="popoverTempSelection=\'' + t + '\';renderCategoryList(\'' + q.replace(/'/g,"\\'") + '\')">' +
-            '<input type="radio" name="fp-cat" ' + tChecked + '>' +
-            '<span style="width:20px;height:20px;display:flex;align-items:center;justify-content:center">' + typeConfig[t].iconSvg + '</span>' +
-            '<span style="font-weight:600">' + t + '</span></div>';
+        var dotClass = typeConfig[t].dot;
+        var chevronRotate = isCollapsed ? 'transform:rotate(-90deg)' : '';
+        var qEsc = q.replace(/'/g,"\\'");
 
-        // Sub-category rows (indented)
-        matchingSubs.forEach(function(s) {
-            var sKey = t + '::' + s;
-            var sChecked = popoverTempSelection === sKey ? 'checked' : '';
-            var sSelClass = popoverTempSelection === sKey ? ' selected' : '';
-            html += '<div class="filter-popover-item' + sSelClass + '" style="padding-left:48px" onclick="popoverTempSelection=\'' + sKey + '\';renderCategoryList(\'' + q.replace(/'/g,"\\'") + '\')">' +
-                '<input type="radio" name="fp-cat" ' + sChecked + '>' +
-                '<span class="dot ' + typeConfig[t].dot + '" style="width:8px;height:8px;border-radius:50%;flex-shrink:0"></span>' +
-                '<span>' + s + '</span></div>';
-        });
+        html += '<div class="filter-popover-item' + tSelClass + '" style="position:relative" onclick="popoverTempSelection=\'' + t.replace(/'/g,"\\'") + '\';renderCategoryList(\'' + qEsc + '\')">' +
+            (matchingSubs.length > 0
+                ? '<span onclick="event.stopPropagation();toggleCategoryCollapse(\'' + t.replace(/'/g,"\\'") + '\',\'' + qEsc + '\')" style="padding:0 2px;cursor:pointer;display:flex;align-items:center;transition:transform 0.15s;' + chevronRotate + '">' +
+                  '<svg width="10" height="6" viewBox="0 0 10 6" fill="#8c9bab"><path d="M1 1l4 4 4-4" stroke="#8c9bab" stroke-width="1.5" fill="none"/></svg></span>'
+                : '<span style="width:14px;flex-shrink:0"></span>') +
+            '<input type="radio" name="fp-cat" ' + tChecked + '>' +
+            '<span class="dot ' + dotClass + '" style="width:8px;height:8px;border-radius:50%;flex-shrink:0"></span>' +
+            '<span>' + t + '</span>' +
+            '</div>';
+
+        // Sub-category rows (only when not collapsed)
+        if (!isCollapsed) {
+            matchingSubs.forEach(function(s) {
+                var sKey = t + '::' + s;
+                var sChecked = popoverTempSelection === sKey ? 'checked' : '';
+                var sSelClass = popoverTempSelection === sKey ? ' selected' : '';
+                html += '<div class="filter-popover-item' + sSelClass + '" style="padding-left:48px" onclick="popoverTempSelection=\'' + sKey.replace(/'/g,"\\'") + '\';renderCategoryList(\'' + qEsc + '\')">' +
+                    '<input type="radio" name="fp-cat" ' + sChecked + '>' +
+                    '<span class="dot ' + dotClass + '" style="width:8px;height:8px;border-radius:50%;flex-shrink:0"></span>' +
+                    '<span>' + s + '</span></div>';
+            });
+        }
     });
 
     list.innerHTML = html;
@@ -3287,6 +3414,20 @@ function renderSortList() {
     }).join('');
 }
 
+function renderPublishStatusList() {
+    const options = Object.entries(statusConfig).map(([key, cfg]) => ({ key, label: cfg.label, color: cfg.color }));
+    const list = document.getElementById('fpList');
+    list.innerHTML = options.map(o => {
+        const checked = popoverTempSelection === o.key ? 'checked' : '';
+        const selClass = popoverTempSelection === o.key ? ' selected' : '';
+        const dot = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${o.color};margin-right:6px;flex:none"></span>`;
+        return `<div class="filter-popover-item${selClass}" onclick="popoverTempSelection='${o.key}';renderPublishStatusList()">
+            <input type="radio" name="fp-publish-status" ${checked}>
+            ${dot}<span>${o.label}</span>
+        </div>`;
+    }).join('');
+}
+
 function parseDateDMY(str) {
     var parts = str.split('.');
     return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
@@ -3347,7 +3488,11 @@ function filterDictionary() {
                 return true;
             });
         }
-        return matchSearch && matchCategory && matchAttrs;
+        let matchPublishStatus = true;
+        if (activePublishStatusFilter) {
+            matchPublishStatus = item.status === activePublishStatusFilter;
+        }
+        return matchSearch && matchCategory && matchAttrs && matchPublishStatus;
     });
 
     // Sort
@@ -3379,7 +3524,7 @@ function filterDictionary() {
         items = mixed;
     }
 
-    const hasActiveFilter = activeCategoryFilter || activeAttributeFilters.length > 0 || query;
+    const hasActiveFilter = activeCategoryFilter || activeAttributeFilters.length > 0 || activePublishStatusFilter || query;
     const disabledStyle = hasActiveFilter ? '' : ' style="opacity:0.4;pointer-events:none"';
     document.getElementById('dictResultBar').innerHTML =
         `<span class="result-count">${hasActiveFilter ? 'Result' : 'All'} (${items.length})</span><button class="result-clear"${disabledStyle} onclick="clearAllFilters(); document.getElementById('dictSearchInput').value=''; filterDictionary();">Clear filter</button>`;
@@ -3432,6 +3577,9 @@ function handleItemDragStart(e, id) {
     // Make backdrop pointer-events-none so drop reaches the canvas
     const backdrop = document.getElementById('dictBackdrop');
     if (backdrop) backdrop.style.pointerEvents = 'none';
+    if (dragItemType === 'Organizational Units') {
+        showLanePreview();
+    }
 }
 
 function handleItemDragEnd(e) {
@@ -3441,7 +3589,70 @@ function handleItemDragEnd(e) {
     // Restore backdrop pointer-events
     const backdrop = document.getElementById('dictBackdrop');
     if (backdrop) backdrop.style.pointerEvents = '';
+    hideLanePreview();
     setTimeout(() => { isDictDragging = false; }, 100);
+}
+
+function showLanePreview() {
+    hideLanePreview();
+    var PAD_TOP = 60, PAD_BOTTOM = 70, PAD_LEFT = 60, PAD_RIGHT = 70;
+    var HEADER_W = 44, r = 8;
+    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    var hasElements = false;
+    Object.keys(ELEMENT_GEOMETRY).forEach(function(elId) {
+        var g = ELEMENT_GEOMETRY[elId];
+        var t = getElTranslate(elId);
+        var left = g.cx - g.hw + t.tx, top = g.cy - g.hh + t.ty;
+        var right = g.cx + g.hw + t.tx, bottom = g.cy + g.hh + t.ty;
+        if (left < minX) minX = left; if (top < minY) minY = top;
+        if (right > maxX) maxX = right; if (bottom > maxY) maxY = bottom;
+        hasElements = true;
+    });
+    document.querySelectorAll('#canvasSvg .bpmn-el').forEach(function(el) {
+        if (!ELEMENT_GEOMETRY[el.id]) {
+            try {
+                var bbox = el.getBBox();
+                var tx = getElTranslate(el.id);
+                if (bbox.width > 0) {
+                    var l = bbox.x + tx.tx, t2 = bbox.y + tx.ty;
+                    var ri = l + bbox.width, b = t2 + bbox.height;
+                    if (l < minX) minX = l; if (t2 < minY) minY = t2;
+                    if (ri > maxX) maxX = ri; if (b > maxY) maxY = b;
+                    hasElements = true;
+                }
+            } catch(e) {}
+        }
+    });
+    if (!hasElements) { minX = 80; minY = 120; maxX = 480; maxY = 320; }
+    var rx = minX - HEADER_W - PAD_LEFT;
+    var ry = minY - PAD_TOP;
+    var laneW = (maxX - minX) + HEADER_W + PAD_LEFT + PAD_RIGHT;
+    var laneH = (maxY - minY) + PAD_TOP + PAD_BOTTOM;
+    var ns = 'http://www.w3.org/2000/svg';
+    var g = document.createElementNS(ns, 'g');
+    g.setAttribute('id', 'lanePreview');
+    var rect = document.createElementNS(ns, 'rect');
+    rect.setAttribute('x', rx); rect.setAttribute('y', ry);
+    rect.setAttribute('width', laneW); rect.setAttribute('height', laneH);
+    rect.setAttribute('rx', r); rect.setAttribute('ry', r);
+    rect.setAttribute('fill', 'rgba(0,100,217,0.04)');
+    rect.setAttribute('stroke', '#0064D9');
+    rect.setAttribute('stroke-width', '2');
+    rect.setAttribute('stroke-dasharray', '8 5');
+    g.appendChild(rect);
+    var hdr = document.createElementNS(ns, 'rect');
+    hdr.setAttribute('x', rx); hdr.setAttribute('y', ry);
+    hdr.setAttribute('width', HEADER_W); hdr.setAttribute('height', laneH);
+    hdr.setAttribute('rx', r); hdr.setAttribute('ry', r);
+    hdr.setAttribute('fill', 'rgba(0,100,217,0.07)');
+    hdr.setAttribute('stroke', 'none');
+    g.appendChild(hdr);
+    document.getElementById('svgLanesLayer').appendChild(g);
+}
+
+function hideLanePreview() {
+    var prev = document.getElementById('lanePreview');
+    if (prev) prev.parentNode.removeChild(prev);
 }
 
 let dragHighlightElId = null;
@@ -3481,6 +3692,11 @@ function handleCanvasDragOver(e) {
     dragOverThrottle = now;
 
     var svgPt = clientToSvg(e.clientX, e.clientY);
+    // Lanes always wrap everything — never highlight individual elements
+    if (dragItemType === 'Organizational Units') {
+        clearDropTargets();
+        return;
+    }
     var hitId = findElementAtPoint(svgPt.x, svgPt.y);
     if (hitId !== dragHighlightElId) {
         clearDropTargets();
@@ -3504,6 +3720,7 @@ function handleCanvasDrop(e) {
     e.preventDefault();
     document.getElementById('canvasArea').classList.remove('canvas-drop-active');
     clearDropTargets();
+    hideLanePreview();
 
     let item;
     const jsonData = e.dataTransfer.getData('application/json');
@@ -3521,7 +3738,8 @@ function handleCanvasDrop(e) {
     const dropY = svgPt.y;
 
     // Check if dropping on an existing element → link if compatible; otherwise → create new
-    const targetElId = findElementAtPoint(dropX, dropY);
+    // Lanes always wrap the whole diagram — never link to individual elements
+    const targetElId = item.type === 'Organizational Units' ? null : findElementAtPoint(dropX, dropY);
     if (targetElId && elementData[targetElId]) {
         var targetElType = document.getElementById(targetElId)?.getAttribute('data-el-type');
         var compatible = item.type && dictToElTypeMap[item.type] === targetElType;
@@ -3627,10 +3845,9 @@ function buildTaskSvg(id, x, y, label, subtype) {
 
     // Icon: Figma asset URL, position matches spec (x=6, y=-5 overflows top like Figma)
     const ix = rx + 6, iy = ry - 5;
-    const userTaskIconUrl = 'https://www.figma.com/api/mcp/asset/25240600-e44b-4c17-995b-eee4069af7ac';
-    const serviceTaskIconUrl = 'https://www.figma.com/api/mcp/asset/25240600-e44b-4c17-995b-eee4069af7ac';
-    const iconUrl = isService ? serviceTaskIconUrl : userTaskIconUrl;
-    const iconMark = `<image href="${iconUrl}" x="${ix}" y="${iy}" width="24" height="24"/>`;
+    const userTaskIconSvg = `<g transform="translate(${ix},${iy})"><circle cx="12" cy="8" r="4" fill="none" stroke="#0064D9" stroke-width="1.5"/><path d="M4 20c0-4 4-7 8-7s8 3 8 7" fill="none" stroke="#0064D9" stroke-width="1.5" stroke-linecap="round"/></g>`;
+    const serviceTaskIconSvg = `<g transform="translate(${ix},${iy})"><circle cx="12" cy="12" r="3" fill="none" stroke="#0064D9" stroke-width="1.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M17.66 6.34l-1.41 1.41M6.34 17.66l-1.41 1.41" stroke="#0064D9" stroke-width="1.5" stroke-linecap="round"/></g>`;
+    const iconMark = isService ? serviceTaskIconSvg : userTaskIconSvg;
 
     // Text label inside the element, vertically centered (lower half to give room for icon)
     const lines = splitLabel(label, 14);
@@ -3753,12 +3970,13 @@ function buildDataObjectSvg(id, x, y, label) {
 function buildSubprocessSvg(id, x, y, label) {
     const w = 120, h = 80;
     const rx = x - w/2, ry = y - h/2;
-    // Figma node 6797:12204 — [+] icon asset
-    const plusUrl = 'https://www.figma.com/api/mcp/asset/ae8f1893-486e-457c-8ea7-57cb27669bae';
+    // Figma node 6797:12204 — [+] icon (inline SVG)
     // [+] icon: 14×14, bottom-center (Figma: ~bottom 36.92% gap → y ≈ ry + h - 14 - 8)
     const plusW = 14, plusH = 14;
     const plusX = rx + w / 2 - plusW / 2;
     const plusY = ry + h - plusH;
+    const plusCx = plusX + plusW / 2, plusCy = plusY + plusH / 2;
+    const plusIcon = `<rect x="${plusX}" y="${plusY}" width="${plusW}" height="${plusH}" rx="2" fill="white" stroke="#0064D9" stroke-width="1.2"/><line x1="${plusCx}" y1="${plusY+2.5}" x2="${plusCx}" y2="${plusY+plusH-2.5}" stroke="#0064D9" stroke-width="1.5" stroke-linecap="round"/><line x1="${plusX+2.5}" y1="${plusCy}" x2="${plusX+plusW-2.5}" y2="${plusCy}" stroke="#0064D9" stroke-width="1.5" stroke-linecap="round"/>`;
     // Label: centered in upper area (Figma text_frame top ~2%, bottom edge ~63% of height)
     const lines = splitLabel(label, 14);
     const lineH = 16;
@@ -3771,7 +3989,7 @@ function buildSubprocessSvg(id, x, y, label) {
         <rect class="selection-box" x="${rx - 1}" y="${ry - 1}" width="${w + 2}" height="${h + 2}"/>
         <rect x="${rx}" y="${ry}" width="${w}" height="${h}" class="bpmn-task" rx="12" ry="12"/>
         ${labelSvg}
-        <image href="${plusUrl}" x="${plusX}" y="${plusY}" width="${plusW}" height="${plusH}"/>
+        ${plusIcon}
         ${buildDictBadge(rx + 6, ry + h - 34, true)}
     </g>`;
 }
@@ -3792,7 +4010,68 @@ function buildPoolLaneSvg(id, x, y, label) {
     return svg;
 }
 
-// ===== Create Canvas Element from Dictionary Item =====
+// ===== Auto-fitting swimlane that wraps all existing elements =====
+function buildAutoLaneSvg(id, label) {
+    var PAD_TOP = 60, PAD_BOTTOM = 70, PAD_LEFT = 60, PAD_RIGHT = 70;
+    var HEADER_W = 44, r = 8;
+
+    // Compute bounding box of all existing BPMN elements
+    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    var hasElements = false;
+    Object.keys(ELEMENT_GEOMETRY).forEach(function(elId) {
+        var g = ELEMENT_GEOMETRY[elId];
+        var t = getElTranslate(elId);
+        var left   = g.cx - g.hw + t.tx;
+        var top    = g.cy - g.hh + t.ty;
+        var right  = g.cx + g.hw + t.tx;
+        var bottom = g.cy + g.hh + t.ty;
+        if (left   < minX) minX = left;
+        if (top    < minY) minY = top;
+        if (right  > maxX) maxX = right;
+        if (bottom > maxY) maxY = bottom;
+        hasElements = true;
+    });
+
+    // Also check any previously dropped elements not in ELEMENT_GEOMETRY
+    document.querySelectorAll('#canvasSvg .bpmn-el').forEach(function(el) {
+        if (!ELEMENT_GEOMETRY[el.id]) {
+            try {
+                var bbox = el.getBBox();
+                var tx = getElTranslate(el.id);
+                if (bbox.width > 0) {
+                    var l = bbox.x + tx.tx, t2 = bbox.y + tx.ty;
+                    var ri = l + bbox.width, b = t2 + bbox.height;
+                    if (l  < minX) minX = l;
+                    if (t2 < minY) minY = t2;
+                    if (ri > maxX) maxX = ri;
+                    if (b  > maxY) maxY = b;
+                    hasElements = true;
+                }
+            } catch(e) {}
+        }
+    });
+
+    if (!hasElements) { minX = 80; minY = 120; maxX = 480; maxY = 320; }
+
+    // Lane wraps all elements: header on left, content contains the elements
+    var rx = minX - HEADER_W - PAD_LEFT;
+    var ry = minY - PAD_TOP;
+    var laneW = (maxX - minX) + HEADER_W + PAD_LEFT + PAD_RIGHT;
+    var laneH = (maxY - minY) + PAD_TOP + PAD_BOTTOM;
+
+    var svg = '<g id="' + id + '" class="bpmn-el" data-el-type="lane">';
+    svg += '<rect class="selection-box" x="' + (rx - 1) + '" y="' + (ry - 1) + '" width="' + (laneW + 2) + '" height="' + (laneH + 2) + '"/>';
+    svg += '<rect x="' + rx + '" y="' + ry + '" width="' + laneW + '" height="' + laneH + '" rx="' + r + '" ry="' + r + '" fill="#ffffff" stroke="#1D2D3E" stroke-width="1.5"/>';
+    svg += '<line x1="' + (rx + HEADER_W) + '" y1="' + ry + '" x2="' + (rx + HEADER_W) + '" y2="' + (ry + laneH) + '" stroke="#1D2D3E" stroke-width="1.5"/>';
+    var lcx = rx + HEADER_W / 2, lcy = ry + laneH / 2;
+    svg += '<text x="' + lcx + '" y="' + lcy + '" text-anchor="middle" dominant-baseline="central"'
+        + ' font-family="\'72\',\'72full\',Arial,Helvetica,sans-serif" font-size="14" font-weight="700" fill="#1D2D3E"'
+        + ' transform="rotate(-90 ' + lcx + ' ' + lcy + ')">' + label + '</text>';
+    svg += '</g>';
+    return svg;
+}
+
+
 function createCanvasElement(item, dropX, dropY) {
     const id = 'el-drop-' + Date.now();
     let svgHtml;
@@ -3819,7 +4098,7 @@ function createCanvasElement(item, dropX, dropY) {
             svgHtml = buildSubprocessSvg(id, dropX, dropY, item.name);
             break;
         case 'Organizational Units':
-            svgHtml = buildPoolLaneSvg(id, dropX, dropY, item.name);
+            svgHtml = buildAutoLaneSvg(id, item.name);
             break;
         default:
             svgHtml = buildTaskSvg(id, dropX, dropY, item.name, 'User Task');
@@ -3828,6 +4107,10 @@ function createCanvasElement(item, dropX, dropY) {
 
     // Insert SVG into canvas using DOMParser for proper SVG namespace
     const svg = document.getElementById('canvasSvg');
+    const isLane = item.type === 'Organizational Units';
+    // Lanes go into a dedicated layer that sits before all BPMN elements in the SVG
+    const insertTarget = isLane ? document.getElementById('svgLanesLayer') : svg;
+
     try {
         const parser = new DOMParser();
         const doc = parser.parseFromString(
@@ -3836,19 +4119,16 @@ function createCanvasElement(item, dropX, dropY) {
         );
         const parseError = doc.querySelector('parsererror');
         if (parseError) throw new Error(parseError.textContent);
-        // Append all children (element + label pill)
-        const children = Array.from(doc.documentElement.children);
-        children.forEach(function(child) {
-            svg.appendChild(document.importNode(child, true));
+        Array.from(doc.documentElement.children).forEach(function(child) {
+            insertTarget.appendChild(document.importNode(child, true));
         });
     } catch (err) {
-        // Fallback: use innerHTML on a temp container
         const ns = 'http://www.w3.org/2000/svg';
         const wrapper = document.createElementNS(ns, 'svg');
         wrapper.innerHTML = svgHtml;
-        while (wrapper.firstChild) {
-            svg.appendChild(wrapper.firstChild);
-        }
+        Array.from(wrapper.children).forEach(function(node) {
+            insertTarget.appendChild(document.importNode(node, true));
+        });
     }
 
     // Add to element data model
@@ -3942,7 +4222,7 @@ function _updateUndoRedoBtns() {
 }
 
 
-function openDetail(id, linkTargetElId) {
+function openDetail(id, linkTargetElId, fromAttrAdd) {
     if (isDictDragging) return;
     const item = dictionaryItems.find(i => i.id === id);
     if (!item) return;
@@ -4027,20 +4307,36 @@ function openDetail(id, linkTargetElId) {
         <div class="detail-section">
             <div class="detail-section-header" style="margin-bottom:10px;">
                 <h4>Used in</h4>
-                <span class="used-in-count">(${item.usedIn.length} processes)</span>
+                <span class="used-in-count" id="usedInCount">(${item.usedIn.length} processes)</span>
                 <button class="sort-btn" style="margin-left:auto;" onclick="toggleDetailSort('${item.id}')">
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#556B82" stroke-width="1.5"><path d="M4 5l4-4 4 4"/><path d="M4 11l4 4 4-4"/></svg>
                     <span id="sortLabel">A-Z</span>
                 </button>
             </div>
+            <div class="used-in-search-wrap"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#556B82" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><line x1="10" y1="10" x2="14" y2="14"/></svg><input class="used-in-search" id="usedInSearch" type="text" placeholder="Search processes..." oninput="filterUsedIn('${item.id}')"></div>
             <div id="usedInList">${renderUsedIn(item.usedIn, true)}</div>
         </div>
     `;
 
-    document.getElementById('detailFooter').innerHTML = linkTargetElId
-        ? `<button class="btn-primary" onclick="badgeLinkFromDetail('${item.id}', '${linkTargetElId}')">Link to element</button>`
-        : `<button class="btn-secondary" onclick="openDetailEdit('${item.id}')">Edit Details</button>
-        <button class="btn-primary" onclick="applyToCanvas('${item.id}')">Add to Canvas</button>`;
+    const footerEl = document.getElementById('detailFooter');
+    if (fromAttrAdd) {
+        footerEl.innerHTML = '';
+        footerEl.style.display = 'none';
+    } else {
+        footerEl.style.display = '';
+        footerEl.innerHTML = linkTargetElId
+            ? `<button class="btn-primary" onclick="badgeLinkFromDetail('${item.id}', '${linkTargetElId}')">Link to element</button>`
+            : `<button class="btn-secondary" onclick="openDetailEdit('${item.id}')">Edit Details</button>
+            <button class="btn-primary" onclick="applyToCanvas('${item.id}')">Add to Canvas</button>`;
+    }
+
+    document.getElementById('detailOverlay').dataset.fromAttrAdd = fromAttrAdd ? '1' : '';
+
+    if (fromAttrAdd) {
+        // Temporarily suspend the outside-click handler so dialog interactions
+        // don't inadvertently close the dropdown.
+        document.removeEventListener('mousedown', _attrAddOutsideHandler);
+    }
 
     document.getElementById('detailBody').scrollTop = 0;
     document.getElementById('detailOverlay').classList.add('open');
@@ -4222,10 +4518,11 @@ function removeEditAttachment(index) {
 
 function renderUsedIn(processes, asc) {
     const sorted = [...processes].sort((a, b) => asc ? a.localeCompare(b) : b.localeCompare(a));
+    if (sorted.length === 0) return '<div class="used-in-empty">No processes found</div>';
     return sorted.map(p => `
         <div class="used-in-item">
             <div class="used-in-item-left">
-                <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:7px;background:#d1efff;border:1px solid #d1efff;flex-shrink:0;"><img src="https://www.figma.com/api/mcp/asset/cec7d7f6-e569-4860-b81b-a8eca14f1f20" width="14" height="14" style="object-fit:contain;display:block;"></span>
+                <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:7px;background:#d1efff;border:1px solid #d1efff;flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16.8 7.20002C16.8 4.54906 18.949 2.40002 21.6 2.40002H38.4C41.051 2.40002 43.2 4.54906 43.2 7.20002V16.8C43.2 19.451 41.051 21.6 38.4 21.6H21.6C18.949 21.6 16.8 19.451 16.8 16.8V14.4H9.6V18.2059L13.6971 22.303C14.6343 23.2402 14.6343 24.7598 13.6971 25.6971L9.6 29.7941V33.6H16.8V31.2C16.8 28.5491 18.949 26.4 21.6 26.4H38.4C41.051 26.4 43.2 28.5491 43.2 31.2V40.8C43.2 43.451 41.051 45.6 38.4 45.6H21.6C18.949 45.6 16.8 43.451 16.8 40.8V38.4H7.2C5.87452 38.4 4.8 37.3255 4.8 36V29.7941L0.702944 25.6971C-0.234315 24.7598 -0.234315 23.2402 0.702944 22.303L4.8 18.2059V12C4.8 10.6745 5.87452 9.60002 7.2 9.60002H16.8V7.20002ZM38.4 7.20002H21.6V16.8H38.4V7.20002ZM38.4 31.2H21.6V40.8H38.4V31.2Z" fill="#0064D9"/></svg></span>
                 <span>${p}</span>
             </div>
             <button class="open-btn" title="Open process">
@@ -4233,6 +4530,18 @@ function renderUsedIn(processes, asc) {
             </button>
         </div>
     `).join('');
+}
+
+let _usedInSortAsc = true;
+
+function filterUsedIn(itemId) {
+    const item = dictionaryItems.find(i => i.id === itemId);
+    if (!item) return;
+    const q = (document.getElementById('usedInSearch')?.value || '').toLowerCase();
+    const filtered = item.usedIn.filter(p => p.toLowerCase().includes(q));
+    document.getElementById('usedInList').innerHTML = renderUsedIn(filtered, _usedInSortAsc);
+    const countEl = document.getElementById('usedInCount');
+    if (countEl) countEl.textContent = q ? `(${filtered.length} of ${item.usedIn.length})` : `(${item.usedIn.length} processes)`;
 }
 
 function toggleShowMore(id) {
@@ -4245,16 +4554,45 @@ function toggleShowMore(id) {
 }
 
 function toggleDetailSort(id) {
-    detailSortAsc = !detailSortAsc;
-    document.getElementById('sortLabel').textContent = detailSortAsc ? 'A-Z' : 'Z-A';
+    _usedInSortAsc = !_usedInSortAsc;
+    detailSortAsc = _usedInSortAsc;
+    document.getElementById('sortLabel').textContent = _usedInSortAsc ? 'A-Z' : 'Z-A';
     const item = dictionaryItems.find(i => i.id === id);
     if (item) {
-        document.getElementById('usedInList').innerHTML = renderUsedIn(item.usedIn, detailSortAsc);
+        const q = (document.getElementById('usedInSearch')?.value || '').toLowerCase();
+        const filtered = q ? item.usedIn.filter(p => p.toLowerCase().includes(q)) : item.usedIn;
+        document.getElementById('usedInList').innerHTML = renderUsedIn(filtered, _usedInSortAsc);
     }
 }
 
 function closeDetail() {
-    document.getElementById('detailOverlay').classList.remove('open');
+    var overlay = document.getElementById('detailOverlay');
+    var fromAttrAdd = overlay.dataset.fromAttrAdd === '1';
+    var fromLiveSuggestions = overlay.dataset.fromLiveSuggestions === '1';
+    overlay.classList.remove('open');
+    overlay.dataset.fromAttrAdd = '';
+    overlay.dataset.fromLiveSuggestions = '';
+    document.getElementById('detailFooter').style.display = '';
+    if (fromLiveSuggestions) {
+        var sugBox = document.getElementById('liveSuggestions');
+        if (sugBox) sugBox.style.display = 'flex';
+        // Refocus the inline edit input so the user can continue typing
+        var inp = document.getElementById('inlineEdit');
+        if (inp) setTimeout(function() { inp.focus(); }, 0);
+        // Clear the flag after the blur timer (150ms) has already fired and been blocked
+        setTimeout(function() { _liveDetailOpen = false; }, 200);
+    }
+    if (fromAttrAdd) {
+        var input = document.getElementById('attrAddInput');
+        var dropdown = document.getElementById('attrAddDropdown');
+        if (input) {
+            input.focus();
+            if (dropdown) dropdown.style.display = 'block';
+            setTimeout(function() {
+                document.addEventListener('mousedown', _attrAddOutsideHandler);
+            }, 0);
+        }
+    }
 }
 
 (function() {
@@ -4279,6 +4617,7 @@ function badgeLinkFromDetail(dictId, elId) {
     updateDictBadge(elId, true);
     closeDetail();
     closeBadgePopup();
+    removeInlineEdit();
     showToast(`Linked "${item.name}" to element`);
     if (document.getElementById('attrPanel').classList.contains('open')) updateAttrPanel();
 }
@@ -4724,6 +5063,8 @@ document.getElementById('canvasArea').addEventListener('wheel', function(e) {
         const scale = 100 / zoom;
         panX += e.deltaX * scale;
         panY += e.deltaY * scale;
+        closeLinkedPopup();
+        closeBadgePopup();
         applyZoom();
     }
 }, { passive: false });
@@ -4759,6 +5100,8 @@ document.getElementById('canvasSvg').addEventListener('mousedown', function(e) {
         panStartVBX = panX;
         panStartVBY = panY;
         document.getElementById('canvasSvg').style.cursor = 'grabbing';
+        closeLinkedPopup();
+        closeBadgePopup();
         e.preventDefault();
     }
 });
@@ -4987,7 +5330,7 @@ let badgePopupAllMatches = [];
 let badgePopupReplaceMode = false;
 let badgePopupPrevDictId = null;
 
-const extLinkIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
+const extLinkIcon = '<svg width="14" height="14" viewBox="0 0 12.8 12.8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.4 1.6C1.95817 1.6 1.6 1.95817 1.6 2.4V10.4C1.6 10.8418 1.95817 11.2 2.4 11.2H10.4C10.8418 11.2 11.2 10.8418 11.2 10.4V8C11.2 7.55817 11.5582 7.2 12 7.2C12.4418 7.2 12.8 7.55817 12.8 8V10.4C12.8 11.7255 11.7255 12.8 10.4 12.8H2.4C1.07452 12.8 0 11.7255 0 10.4V2.4C0 1.07452 1.07452 0 2.4 0H4.8C5.24183 0 5.6 0.358172 5.6 0.8C5.6 1.24183 5.24183 1.6 4.8 1.6H2.4ZM8.8 1.6C8.35817 1.6 8 1.24183 8 0.8C8 0.358172 8.35817 0 8.8 0H12C12.4418 0 12.8 0.358172 12.8 0.8V4C12.8 4.44183 12.4418 4.8 12 4.8C11.5582 4.8 11.2 4.44183 11.2 4V2.73137L6.96569 6.96569C6.65327 7.27811 6.14673 7.27811 5.83431 6.96569C5.5219 6.65327 5.5219 6.14673 5.83431 5.83431L10.0686 1.6H8.8Z" fill="#0064D9"/></svg>';
 const linkIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>';
 const docIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0064D9" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
 
@@ -5002,6 +5345,9 @@ function renderBadgePopupCards(items) {
         const cfg = typeConfig[item.type] || {};
         const dotClass = cfg.dot || 'dot-task';
         const bestMatch = i === 0 ? '<span class="bp-best-match">Best match</span>' : '';
+        const subCat = item.subCategory ? `<span class="bp-breadcrumb-sep">›</span><span class="dot ${dotClass}"></span>${item.subCategory}` : '';
+        const sCfg = item.status && statusConfig[item.status];
+        const statusBadge = sCfg ? `<span style="font-size:14px;font-weight:600;padding:2px 8px;border-radius:1rem;${sCfg.chipColor}">${sCfg.label}</span>` : '';
         html += `<div class="badge-popup-card" data-dict-id="${item.id}" data-idx="${i}">
             <div class="bp-card-name">
                 ${item.name}
@@ -5010,17 +5356,18 @@ function renderBadgePopupCards(items) {
             </div>
             <div class="bp-card-type">
                 <span class="dot ${dotClass}"></span>
-                ${item.type}
+                ${item.type}${subCat}
             </div>
             <div class="bp-card-desc">${item.description || ''}</div>
             <div class="bp-card-details">
                 <div class="bp-detail-row"><span class="bp-detail-label">Updated by:</span><span class="bp-detail-value">${item.updatedBy || 'N/A'}</span></div>
                 <div class="bp-detail-row"><span class="bp-detail-label">Last updated:</span><span class="bp-detail-value">${item.lastUpdated || 'N/A'}</span></div>
+                ${sCfg ? `<div class="bp-detail-row"><span class="bp-detail-label">Status:</span><span class="bp-detail-value">${sCfg.label}</span></div>` : ''}
                 <div class="bp-detail-row"><span class="bp-detail-label">Usage:</span><span class="bp-detail-value">${item.usedIn ? item.usedIn.length : 0} processes</span></div>
-                ${item.links && item.links.length > 0 ? `<div class="bp-links-section">${item.links.map(l => `<a class="bp-doc-link" href="${l.url}" target="_blank" onclick="event.stopPropagation()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>${l.name}</a>`).join('')}</div>` : ''}
+                ${item.links && item.links.length > 0 ? `<div class="bp-detail-row"><span class="bp-detail-label">Linked document:</span><span class="bp-detail-value"><a href="${item.links[0].url}" target="_blank" onclick="event.stopPropagation()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>${item.links[0].name}</a></span></div>` : ''}
                 <div class="bp-card-actions">
                     <button class="bp-action-details" onclick="event.stopPropagation(); openDetail('${item.id}', badgePopupTargetElId)">View Details</button>
-                    <button class="bp-action-link" onclick="event.stopPropagation(); linkBadgeToDict('${item.id}')">${linkIcon} Link to element</button>
+                    <button class="bp-action-link" onclick="event.stopPropagation(); linkBadgeToDict('${item.id}')">Link to Element</button>
                 </div>
             </div>
         </div>`;
@@ -5044,6 +5391,9 @@ function showBadgePopup(badge, replaceMode) {
     const popup = document.getElementById('badgePopup');
     const elGroup = badge.closest('.bpmn-el');
     if (!elGroup) return;
+    // Remove popup-open from any previously active badge
+    document.querySelectorAll('.bpmn-dict-badge.popup-open').forEach(b => b.classList.remove('popup-open'));
+    badge.classList.add('popup-open');
     badgePopupTargetElId = elGroup.id;
     badgePopupReplaceMode = !!replaceMode;
     badgePopupPrevDictId = replaceMode ? (elementData[elGroup.id]?.linkedDictId || null) : null;
@@ -5056,11 +5406,11 @@ function showBadgePopup(badge, replaceMode) {
         const prevItem = dictionaryItems.find(d => d.id === badgePopupPrevDictId);
         titleEl.textContent = 'Replace Dictionary Link';
         subtitleEl.textContent = 'Currently linked to "' + (prevItem ? prevItem.name : '—') + '". Select a new item below.';
-        footerEl.innerHTML = '<button onclick="badgePopupCreateNew()">+ Create new Dictionary item</button>';
+        footerEl.innerHTML = '<button onclick="badgePopupCreateNew()">Create new Dictionary item</button>';
     } else {
         titleEl.textContent = 'Link to Dictionary';
         subtitleEl.textContent = 'This element is not linked. Select an item below or create a new one.';
-        footerEl.innerHTML = '<button onclick="badgePopupCreateNew()">+ Create new Dictionary item</button>';
+        footerEl.innerHTML = '<button onclick="badgePopupCreateNew()">Create new Dictionary item</button>';
     }
 
     // Remove any stale outside-click listener
@@ -5146,6 +5496,8 @@ function linkBadgeToDict(dictId) {
     const wasReplace = badgePopupReplaceMode;
     if (data) {
         data.linkedDictId = dictId;
+        data.name = item.name;
+        updateElementLabel(badgePopupTargetElId, item.name);
     }
     updateDictBadge(badgePopupTargetElId, true);
     if (wasReplace) {
@@ -5195,6 +5547,7 @@ function repositionBadgePopup() {
 
 function closeBadgePopup() {
     document.getElementById('badgePopup').classList.remove('open');
+    document.querySelectorAll('.bpmn-dict-badge.popup-open').forEach(b => b.classList.remove('popup-open'));
     badgePopupTargetElId = null;
     badgePopupReplaceMode = false;
     badgePopupPrevDictId = null;
@@ -5251,6 +5604,9 @@ let linkedPopupTargetElId = null;
 function showLinkedBadgePopup(badge) {
     const elGroup = badge.closest('.bpmn-el');
     if (!elGroup) return;
+    // Keep badge visible while popup is open
+    document.querySelectorAll('.bpmn-dict-badge.popup-open').forEach(b => b.classList.remove('popup-open'));
+    badge.classList.add('popup-open');
     linkedPopupTargetElId = elGroup.id;
     const data = elementData[elGroup.id];
 
@@ -5262,7 +5618,19 @@ function showLinkedBadgePopup(badge) {
 
     const popup = document.getElementById('linkedPopup');
     document.getElementById('linkedPopupName').textContent = dictItem ? dictItem.name : (data ? data.name : 'Unknown');
-    document.getElementById('linkedPopupType').textContent = dictItem ? dictItem.type + (dictItem.subCategory ? ' · ' + dictItem.subCategory : '') : (data ? data.subtype : '');
+
+    // Breadcrumb: ● Type  >  ● SubCategory
+    const typeEl = document.getElementById('linkedPopupType');
+    const typeName = dictItem ? dictItem.type : (data ? data.type : null);
+    const subCat = dictItem ? dictItem.subCategory : null;
+    const dotClass = (typeName && typeConfig[typeName]) ? typeConfig[typeName].dot : 'dot-role';
+    if (typeName) {
+        let html = `<span class="lp-dot ${dotClass}"></span><span>${typeName}</span>`;
+        if (subCat) html += `<span class="lp-sep">›</span><span class="lp-dot ${dotClass}"></span><span>${subCat}</span>`;
+        typeEl.innerHTML = html;
+    } else {
+        typeEl.textContent = '';
+    }
 
     // Update icon to match dictionary item type
     const iconEl = document.getElementById('linkedPopupIcon');
@@ -5280,7 +5648,7 @@ function showLinkedBadgePopup(badge) {
     // Position popup right next to the badge icon
     const badgeBg = badge.querySelector('.badge-bg') || badge;
     let rect = badgeBg.getBoundingClientRect();
-    const popupH = 250, popupW = 300;
+    const popupH = 250, popupW = 353;
 
     // If badge is too low for popup to fit, pan canvas upward
     const neededBottom = rect.top + popupH;
@@ -5314,6 +5682,7 @@ function showLinkedBadgePopup(badge) {
 
 function closeLinkedPopup() {
     document.getElementById('linkedPopup').classList.remove('open');
+    document.querySelectorAll('.bpmn-dict-badge.popup-open').forEach(b => b.classList.remove('popup-open'));
     linkedPopupTargetElId = null;
     document.removeEventListener('click', closeLinkedPopupOutside, { capture: true });
 }
@@ -5406,6 +5775,7 @@ document.getElementById('canvasSvg').addEventListener('dblclick', function(e) {
 // ===== Live Suggestions =====
 let liveSuggestionsSelectedIndex = -1;
 let liveSuggestionsData = [];
+let _liveDetailOpen = false; // true while detail dialog is open from live suggestions (blocks blur commit)
 
 const elementTypeToDict = {
     task: 'Activities', gateway: 'Gateway', event: 'Events',
@@ -5418,6 +5788,7 @@ function getSuggestions(query, elementType) {
     const dictType = elementTypeToDict[elementType] || '';
 
     return dictionaryItems.map(item => {
+        if (item.dictOnly) return null;
         const name = item.name.toLowerCase();
         const desc = (item.description || '').toLowerCase();
         let score = 0;
@@ -5446,16 +5817,14 @@ function renderSuggestions(suggestions, container) {
     liveSuggestionsData = suggestions;
 
     const sparkle = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 0L9.5 5.5L15 4L10.5 8L15 12L9.5 10.5L8 16L6.5 10.5L1 12L5.5 8L1 4L6.5 5.5L8 0Z" fill="#2563eb" opacity="0.8"/></svg>';
-    const infoIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
-    const linkIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
     const searchIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
-    const exploreIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
+    const outlinkSvg = `<svg width="12" height="12" viewBox="0 0 12.8 12.8" fill="none"><path d="M2.4 1.6C1.958 1.6 1.6 1.958 1.6 2.4V10.4C1.6 10.842 1.958 11.2 2.4 11.2H10.4C10.842 11.2 11.2 10.842 11.2 10.4V8C11.2 7.558 11.558 7.2 12 7.2C12.442 7.2 12.8 7.558 12.8 8V10.4C12.8 11.726 11.726 12.8 10.4 12.8H2.4C1.075 12.8 0 11.726 0 10.4V2.4C0 1.075 1.075 0 2.4 0H4.8C5.242 0 5.6 0.358 5.6 0.8C5.6 1.242 5.242 1.6 4.8 1.6H2.4ZM8.8 1.6C8.358 1.6 8 1.242 8 0.8C8 0.358 8.358 0 8.8 0H12C12.442 0 12.8 0.358 12.8 0.8V4C12.8 4.442 12.442 4.8 12 4.8C11.558 4.8 11.2 4.442 11.2 4V2.731L6.966 6.966C6.653 7.278 6.147 7.278 5.834 6.966C5.522 6.653 5.522 6.147 5.834 5.834L10.069 1.6H8.8Z" fill="currentColor"/></svg>`;
 
     let html = `<div class="live-suggestions-header">
-        <span class="title">${sparkle} LIVE SUGGESTIONS</span>
+        <span class="title">LIVE SUGGESTIONS</span>
         <span class="actions">
             <button class="btn-create-new" onmousedown="event.preventDefault(); event.stopPropagation(); liveCreateNew();">+ Create new</button>
-            <button class="btn-search" onmousedown="event.preventDefault(); event.stopPropagation(); liveSearch();">${searchIcon}</button>
+            <span class="sg-outlink" title="Open Dictionary" style="color:#0064D9;cursor:pointer;display:inline-flex;align-items:center;padding:4px;" onmousedown="event.preventDefault(); event.stopPropagation(); liveExploreMore();">${outlinkSvg}</span>
         </span>
     </div>
     <div class="live-suggestions-list">`;
@@ -5463,40 +5832,49 @@ function renderSuggestions(suggestions, container) {
     suggestions.forEach((item, i) => {
         const cfg = typeConfig[item.type] || {};
         const dotClass = cfg.dot || 'dot-task';
-        const selected = i === liveSuggestionsSelectedIndex ? ' selected' : '';
-        html += `<div class="live-suggestion-item${selected}" data-index="${i}">
-            <div class="sg-content">
-                <div class="sg-name">
-                    <span>${item.name}</span>
-                    ${i === 0 ? '<span class="sg-badge">Best match</span>' : ''}
-                </div>
-                <div class="sg-type">
-                    <span class="dot ${dotClass}"></span>
-                    <span>${item.type}${item.subCategory ? ' · ' + item.subCategory : ''}</span>
-                </div>
-                <div class="sg-desc">${item.description || ''}</div>
-                <div class="sg-updated">Updated ${item.lastUpdated}</div>
+        const sCfg = item.status && statusConfig[item.status];
+        const outlink = `<span class="sg-outlink" title="View full details" onmousedown="event.preventDefault(); event.stopPropagation(); liveViewDetail('${item.id}');">${outlinkSvg}</span>`;
+        html += `<div class="live-suggestion-item" data-index="${i}">
+            <div class="sg-name">
+                <span>${item.name}</span>
+                ${outlink}
+                ${i === 0 ? '<span class="sg-badge">Best match</span>' : ''}
             </div>
-            <div class="sg-actions">
-                <button onmousedown="event.preventDefault(); event.stopPropagation(); liveViewDetail('${item.id}');">${infoIcon}</button>
-                <button onmousedown="event.preventDefault(); event.stopPropagation(); acceptSuggestion(${i});">${linkIcon}</button>
+            <div class="sg-type">
+                <span class="dot ${dotClass}"></span>
+                <span>${item.type}${item.subCategory ? ' · ' + item.subCategory : ''}</span>
+            </div>
+            <div class="sg-desc">${item.description || ''}</div>
+            <div class="sg-details">
+                <div class="bp-detail-row"><span class="bp-detail-label">Updated by:</span><span class="bp-detail-value">${item.updatedBy || 'N/A'}</span></div>
+                <div class="bp-detail-row"><span class="bp-detail-label">Last updated:</span><span class="bp-detail-value">${item.lastUpdated || 'N/A'}</span></div>
+                ${sCfg ? `<div class="bp-detail-row"><span class="bp-detail-label">Status:</span><span class="bp-detail-value">${sCfg.label}</span></div>` : ''}
+                <div class="bp-detail-row"><span class="bp-detail-label">Usage:</span><span class="bp-detail-value">${item.usedIn ? item.usedIn.length : 0} processes</span></div>
+                <div class="bp-card-actions">
+                    <button class="bp-action-details" onmousedown="event.preventDefault(); event.stopPropagation(); liveViewDetail('${item.id}');">View Details</button>
+                    <button class="bp-action-link" onmousedown="event.preventDefault(); event.stopPropagation(); acceptSuggestion(${i});">Link to element</button>
+                </div>
             </div>
         </div>`;
     });
 
-    html += `</div>
-    <button class="live-suggestions-footer" onmousedown="event.preventDefault(); event.stopPropagation(); liveExploreMore();">
-        ${exploreIcon} Explore more
-    </button>`;
+    html += `
+        <button class="live-suggestions-explore" onmousedown="event.preventDefault(); event.stopPropagation(); liveExploreMore();">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Explore more
+        </button>
+    </div>`;
 
     container.innerHTML = html;
 
-    // Click handlers on items
+    // Click on card body toggles expand (but not on outlink or action buttons)
     container.querySelectorAll('.live-suggestion-item').forEach(el => {
         el.addEventListener('mousedown', function(e) {
+            if (e.target.closest('.sg-outlink') || e.target.closest('.bp-card-actions')) return;
             e.preventDefault();
-            const idx = parseInt(this.dataset.index);
-            acceptSuggestion(idx);
+            const wasExpanded = this.classList.contains('expanded');
+            container.querySelectorAll('.live-suggestion-item.expanded').forEach(c => c.classList.remove('expanded'));
+            if (!wasExpanded) this.classList.add('expanded');
         });
     });
 }
@@ -5528,7 +5906,7 @@ function liveCreateNew() {
     if (elId && elementData[elId]) {
         dictType = elementTypeToDict[elementData[elId].type] || null;
     }
-    if (inp) commitInlineEdit(inp.dataset.elementId, inp.value);
+    if (inp) commitInlineEdit(inp.dataset.elementId, inp.value, true);
     openCreateDialog(typedText, dictType, elId);
 }
 
@@ -5536,7 +5914,7 @@ function liveSearch() {
     var inp = document.getElementById('inlineEdit');
     var typedText = inp ? inp.value.trim() : '';
     var elId = inp ? inp.dataset.elementId : null;
-    if (inp) commitInlineEdit(inp.dataset.elementId, inp.value);
+    if (inp) commitInlineEdit(inp.dataset.elementId, inp.value, true);
     _openDictWithQuery(elId, typedText, true);
 }
 
@@ -5544,7 +5922,7 @@ function liveExploreMore() {
     var inp = document.getElementById('inlineEdit');
     var typedText = inp ? inp.value.trim() : '';
     var elId = inp ? inp.dataset.elementId : null;
-    if (inp) commitInlineEdit(inp.dataset.elementId, inp.value);
+    if (inp) commitInlineEdit(inp.dataset.elementId, inp.value, true);
     _openDictWithQuery(elId, typedText, false);
 }
 
@@ -5584,9 +5962,15 @@ function _openDictWithQuery(elId, query, focusSearch) {
 }
 
 function liveViewDetail(dictId) {
-    var inp = document.getElementById('inlineEdit');
-    if (inp) commitInlineEdit(inp.dataset.elementId, inp.value);
-    openDetail(dictId);
+    var inp = document.getElementById('inlineEditFO') || document.getElementById('inlineEdit');
+    var elId = inp ? (inp.dataset.elementId || _inlineEditElementId) : _inlineEditElementId;
+    // Hide the suggestion box without closing inline edit
+    var sugBox = document.getElementById('liveSuggestions');
+    if (sugBox) sugBox.style.display = 'none';
+    var overlay = document.getElementById('detailOverlay');
+    if (overlay) overlay.dataset.fromLiveSuggestions = '1';
+    _liveDetailOpen = true;
+    openDetail(dictId, elId || null);
 }
 
 let _inlineEditHiddenTexts = [];
@@ -5700,11 +6084,11 @@ function startInlineEdit(id) {
     });
 
     input.addEventListener('blur', function() {
-        setTimeout(() => { if (document.getElementById('inlineEditFO')) commitInlineEdit(id, input.textContent); }, 150);
+        setTimeout(() => { if (!_liveDetailOpen && document.getElementById('inlineEditFO')) commitInlineEdit(id, input.textContent); }, 150);
     });
 }
 
-function commitInlineEdit(id, newName) {
+function commitInlineEdit(id, newName, silent) {
     newName = newName.trim();
     if (!newName) { removeInlineEdit(); return; }
 
@@ -5715,7 +6099,7 @@ function commitInlineEdit(id, newName) {
     data.name = newName;
     updateElementLabel(id, newName);
     removeInlineEdit();
-    showToast(`Renamed to "${newName}"`);
+    if (!silent) showToast(`Renamed to "${newName}"`);
 }
 
 function removeInlineEdit() {
@@ -5723,6 +6107,7 @@ function removeInlineEdit() {
     _inlineEditHiddenTexts = [];
     _inlineEditOriginalName = null;
     _inlineEditElementId = null;
+    _liveDetailOpen = false;
     const fo = document.getElementById('inlineEditFO');
     if (fo) fo.remove();
     const existing = document.getElementById('inlineEdit');
@@ -5904,9 +6289,110 @@ const svgInfo = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" str
 function chipValue(text, icon) {
     return '<span class="rsp-chip-value">' + (icon ? '<span class="chip-icon">' + icon + '</span>' : '') + text + '<span class="chip-x">' + svgX + '</span></span>';
 }
-function addBtn() { return '<button class="rsp-add-btn" title="Add">' + svgPlus + '</button>'; }
+function chipValueLinked(text, dictId, elId, attrKey, index) {
+    var openDetail = dictId ? ' onclick="openDetail(\'' + dictId + '\')" style="cursor:pointer" title="View dictionary entry"' : '';
+    var removeOnclick = (elId && attrKey && index !== undefined)
+        ? ' onclick="event.stopPropagation();removeAttrAddition(\'' + elId + '\',\'' + attrKey + '\',' + index + ')"'
+        : '';
+    return '<span class="rsp-chip-value rsp-chip-linked"' + openDetail + '>' + text + '<span class="chip-x"' + removeOnclick + '>' + svgX + '</span></span>';
+}
+function removeAttrAddition(elId, attrKey, index) {
+    var key = elId + '::' + attrKey;
+    if (attrAdditions[key]) {
+        attrAdditions[key].splice(index, 1);
+        updateAttrPanel();
+    }
+}
+function addBtn(elId, attrKey) {
+    var onclick = (elId && attrKey) ? ' onclick="openAttrAddInput(\'' + elId + '\',\'' + attrKey + '\',this)"' : '';
+    return '<button class="rsp-add-btn" title="Add"' + onclick + '>' + svgPlus + '</button>';
+}
 function editBtn() { return '<button class="rsp-edit-btn" title="Edit">' + svgEdit + '</button>'; }
 function attrLabel(text, req) { return '<div class="rsp-attr-label">' + text + ':' + (req ? ' <span class="req">*</span>' : '') + '</div>'; }
+
+function openAttrAddInput(elId, attrKey, btn) {
+    closeAttrAddInput();
+    _attrAddBtn = btn;
+    btn.style.display = 'none';
+    var wrap = document.createElement('div');
+    wrap.className = 'attr-add-wrap';
+    wrap.id = 'attrAddWrap';
+    var elIdE = elId.replace(/'/g,"\\'");
+    var attrKeyE = attrKey.replace(/'/g,"\\'");
+    wrap.innerHTML =
+        '<input class="attr-add-input" id="attrAddInput" placeholder="Search dictionary or type to add..." autocomplete="off"' +
+        ' oninput="filterAttrSuggestions(\'' + elIdE + '\',\'' + attrKeyE + '\')"' +
+        ' onkeydown="handleAttrInputKey(event,\'' + elIdE + '\',\'' + attrKeyE + '\')">' +
+        '<div class="attr-add-dropdown" id="attrAddDropdown"></div>';
+    btn.parentNode.insertBefore(wrap, btn.nextSibling);
+    var input = document.getElementById('attrAddInput');
+    input.focus();
+    filterAttrSuggestions(elId, attrKey);
+    setTimeout(function() {
+        document.addEventListener('mousedown', _attrAddOutsideHandler);
+    }, 0);
+}
+function _attrAddOutsideHandler(e) {
+    var wrap = document.getElementById('attrAddWrap');
+    if (wrap && !wrap.contains(e.target)) closeAttrAddInput();
+}
+function closeAttrAddInput() {
+    document.removeEventListener('mousedown', _attrAddOutsideHandler);
+    var wrap = document.getElementById('attrAddWrap');
+    if (wrap) wrap.remove();
+    if (_attrAddBtn) { _attrAddBtn.style.display = ''; _attrAddBtn = null; }
+}
+function filterAttrSuggestions(elId, attrKey) {
+    var input = document.getElementById('attrAddInput');
+    var dropdown = document.getElementById('attrAddDropdown');
+    if (!input || !dropdown) return;
+    var q = input.value.toLowerCase();
+    var matches = dictionaryItems.filter(function(item) {
+        return !q || item.name.toLowerCase().includes(q) || (item.description || '').toLowerCase().includes(q);
+    }).slice(0, 8);
+    if (matches.length === 0) {
+        dropdown.style.display = q ? 'block' : 'none';
+        dropdown.innerHTML = q ? '<div class="attr-add-suggestion" style="color:#8c9bab;cursor:default">No dictionary matches</div>' : '';
+        return;
+    }
+    var elIdE = elId.replace(/'/g,"\\'");
+    var attrKeyE = attrKey.replace(/'/g,"\\'");
+    dropdown.style.display = 'block';
+    dropdown.innerHTML = matches.map(function(item) {
+        var cfg = typeConfig[item.type] || {};
+        var dotClass = cfg.dot || 'dot-task';
+        var nameE = item.name.replace(/'/g,"\\'");
+        return '<div class="attr-add-suggestion" onclick="selectAttrSuggestion(\'' + elIdE + '\',\'' + attrKeyE + '\',\'' + item.id + '\',\'' + nameE + '\')">' +
+            '<span class="dot ' + dotClass + '" style="width:8px;height:8px;border-radius:50%;flex-shrink:0"></span>' +
+            '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + item.name + '</span>' +
+            '<span style="font-size:11px;color:#8c9bab;white-space:nowrap;margin-left:6px">' + item.type + '</span>' +
+            '<button style="margin-left:8px;flex-shrink:0;border:none;background:none;cursor:pointer;color:#0064D9;font-size:11px;padding:0 2px" onclick="event.stopPropagation();openDetail(\'' + item.id + '\',null,true)" title="View details">Details</button>' +
+            '</div>';
+    }).join('') +
+    '';
+}
+function selectAttrSuggestion(elId, attrKey, dictId, label) {
+    var key = elId + '::' + attrKey;
+    if (!attrAdditions[key]) attrAdditions[key] = [];
+    attrAdditions[key].push({ text: label, dictId: dictId });
+    closeAttrAddInput();
+    updateAttrPanel();
+}
+function confirmAttrInput(elId, attrKey) {
+    var input = document.getElementById('attrAddInput');
+    if (!input) return;
+    var text = input.value.trim();
+    if (!text) { closeAttrAddInput(); return; }
+    var key = elId + '::' + attrKey;
+    if (!attrAdditions[key]) attrAdditions[key] = [];
+    attrAdditions[key].push({ text: text, dictId: null });
+    closeAttrAddInput();
+    updateAttrPanel();
+}
+function handleAttrInputKey(e, elId, attrKey) {
+    if (e.key === 'Enter') { e.preventDefault(); confirmAttrInput(elId, attrKey); }
+    if (e.key === 'Escape') { closeAttrAddInput(); }
+}
 
 function renderDiagramAttributes() {
     const body = document.getElementById('attrBody');
@@ -6214,14 +6700,18 @@ function renderElementAttributes(elId) {
         // Assigned Role
         h += '<div class="rsp-attr">';
         h += attrLabel('Assigned Role', true);
-        var roles = { 'el-evaluate':'HR Recruiter', 'el-reject1':'HR Recruiter', 'el-plan':'Hiring Manager', 'el-interview':'Hiring Manager', 'el-reject2':'HR Recruiter', 'el-offer':'HR Director', 'el-onboard':'HR Operations' };
+        var roles = { 'el-evaluate':'HR Recruiter', 'el-reject1':'HR Recruiter', 'el-plan':'Hiring Manager', 'el-reject2':'HR Recruiter', 'el-offer':'HR Director', 'el-onboard':'HR Operations' };
         var role = roles[elId] || 'Unassigned';
-        if (role !== 'Unassigned') {
-            h += '<div class="rsp-chips-grid">' + chipValue(role) + '</div>';
+        var roleAdditions = attrAdditions[elId + '::assigned-role'] || [];
+        if (role !== 'Unassigned' || roleAdditions.length > 0) {
+            h += '<div class="rsp-chips-grid">' +
+                (role !== 'Unassigned' ? chipValue(role) : '') +
+                roleAdditions.map(function(a, i){ return a.dictId ? chipValueLinked(a.text, a.dictId, elId, 'assigned-role', i) : chipValue(a.text); }).join('') +
+                '</div>';
         } else {
             h += '<div class="rsp-single-value" style="color:#556B82;font-style:italic">Unassigned</div>';
         }
-        h += '<div style="margin-top:6px">' + addBtn() + '</div>';
+        h += '<div style="margin-top:6px">' + addBtn(elId, 'assigned-role') + '</div>';
         h += '</div>';
 
         // Duration / SLA
@@ -6236,12 +6726,16 @@ function renderElementAttributes(elId) {
         h += attrLabel('Input Documents', false);
         var inputs = { 'el-evaluate':['CV / Resume','Cover Letter'], 'el-plan':['Interview Schedule Template'], 'el-interview':['Interview Scorecard','CV / Resume'], 'el-offer':['Salary Benchmark Report'], 'el-onboard':['Offer Letter (signed)','IT Access Request Form'] };
         var inDocs = inputs[elId] || [];
-        if (inDocs.length) {
-            h += '<div class="rsp-chips-grid">' + inDocs.map(function(d){ return chipValue(d); }).join('') + '</div>';
+        var inAdditions = attrAdditions[elId + '::input-documents'] || [];
+        if (inDocs.length || inAdditions.length) {
+            h += '<div class="rsp-chips-grid">' +
+                inDocs.map(function(d){ return chipValue(d); }).join('') +
+                inAdditions.map(function(a, i){ return a.dictId ? chipValueLinked(a.text, a.dictId, elId, 'input-documents', i) : chipValue(a.text); }).join('') +
+                '</div>';
         } else {
             h += '<div class="rsp-single-value" style="color:#556B82;font-style:italic">None</div>';
         }
-        h += '<div style="margin-top:6px">' + addBtn() + '</div>';
+        h += '<div style="margin-top:6px">' + addBtn(elId, 'input-documents') + '</div>';
         h += '</div>';
 
         // Output Documents
@@ -6249,12 +6743,16 @@ function renderElementAttributes(elId) {
         h += attrLabel('Output Documents', false);
         var outputs = { 'el-evaluate':['Screening Report'], 'el-interview':['Completed Scorecard'], 'el-offer':['Offer Letter'], 'el-onboard':['Employee Record'], 'el-reject1':['Rejection Email'], 'el-reject2':['Rejection Email'] };
         var outDocs = outputs[elId] || [];
-        if (outDocs.length) {
-            h += '<div class="rsp-chips-grid">' + outDocs.map(function(d){ return chipValue(d); }).join('') + '</div>';
+        var outAdditions = attrAdditions[elId + '::output-documents'] || [];
+        if (outDocs.length || outAdditions.length) {
+            h += '<div class="rsp-chips-grid">' +
+                outDocs.map(function(d){ return chipValue(d); }).join('') +
+                outAdditions.map(function(a, i){ return a.dictId ? chipValueLinked(a.text, a.dictId, elId, 'output-documents', i) : chipValue(a.text); }).join('') +
+                '</div>';
         } else {
             h += '<div class="rsp-single-value" style="color:#556B82;font-style:italic">None</div>';
         }
-        h += '<div style="margin-top:6px">' + addBtn() + '</div>';
+        h += '<div style="margin-top:6px">' + addBtn(elId, 'output-documents') + '</div>';
         h += '</div>';
 
         // IT Systems Used
@@ -6262,12 +6760,16 @@ function renderElementAttributes(elId) {
         h += attrLabel('IT Systems', false);
         var systems = { 'el-evaluate':['SAP SuccessFactors'], 'el-plan':['Microsoft Outlook','SAP SuccessFactors'], 'el-interview':['Microsoft Teams','ATS System'], 'el-offer':['SAP SuccessFactors','DocuSign'], 'el-onboard':['SAP SuccessFactors','SAP S/4HANA','Active Directory'] };
         var sys = systems[elId] || [];
-        if (sys.length) {
-            h += '<div class="rsp-chips-grid">' + sys.map(function(s){ return chipValue(s); }).join('') + '</div>';
+        var sysAdditions = attrAdditions[elId + '::it-systems'] || [];
+        if (sys.length || sysAdditions.length) {
+            h += '<div class="rsp-chips-grid">' +
+                sys.map(function(s){ return chipValue(s); }).join('') +
+                sysAdditions.map(function(a, i){ return a.dictId ? chipValueLinked(a.text, a.dictId, elId, 'it-systems', i) : chipValue(a.text); }).join('') +
+                '</div>';
         } else {
             h += '<div class="rsp-single-value" style="color:#556B82;font-style:italic">None</div>';
         }
-        h += '<div style="margin-top:6px">' + addBtn() + '</div>';
+        h += '<div style="margin-top:6px">' + addBtn(elId, 'it-systems') + '</div>';
         h += '</div>';
 
     } else if (elType === 'gateway') {
@@ -6361,35 +6863,29 @@ function renderElementAttributes(elId) {
 
 // Icons for element types in panel header
 const elTypeIcons = {
-    task: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1.5" stroke="#0057D2" stroke-width="1.2"/><path d="M5 7l2 2 4-4" stroke="#0057D2" stroke-width="1.2" fill="none"/></svg>',
+    task: '<svg width="16" height="16" viewBox="0 0 48 28.8" fill="#0057D2"><path d="M0 7.2C0 3.22 3.22 0 7.2 0H24c3.98 0 7.2 3.22 7.2 7.2V12h8.61l-3.1-3.1c-.94-.94-.94-2.46 0-3.4.94-.93 2.46-.93 3.39 0l7.2 7.2c.94.94.94 2.46 0 3.39l-7.2 7.2c-.93.94-2.45.94-3.39 0-.94-.94-.94-2.46 0-3.39L39.81 16.8H31.2v4.8c0 3.98-3.22 7.2-7.2 7.2H7.2C3.22 28.8 0 25.58 0 21.6V7.2zM7.2 4.8C5.87 4.8 4.8 5.87 4.8 7.2v14.4c0 1.33 1.07 2.4 2.4 2.4H24c1.33 0 2.4-1.07 2.4-2.4V7.2c0-1.33-1.07-2.4-2.4-2.4H7.2z"/></svg>',
     gateway: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="8" y="1.3" width="9.4" height="9.4" rx="1" transform="rotate(45 8 1.3)" stroke="#0057D2" stroke-width="1.2"/></svg>',
     event: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="#0057D2" stroke-width="1.2"/></svg>',
-    system: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="14" height="10" rx="1.5" stroke="#0057D2" stroke-width="1.2"/><line x1="5" y1="14" x2="11" y2="14" stroke="#0057D2" stroke-width="1.2"/><line x1="8" y1="12" x2="8" y2="14" stroke="#0057D2" stroke-width="1.2"/></svg>'
+    system: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="14" height="10" rx="1.5" stroke="#0057D2" stroke-width="1.2"/><line x1="5" y1="14" x2="11" y2="14" stroke="#0057D2" stroke-width="1.2"/><line x1="8" y1="12" x2="8" y2="14" stroke="#0057D2" stroke-width="1.2"/></svg>',
+    lane: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="5.5" r="2.2" stroke="#0057D2" stroke-width="1.3"/><path d="M6 14c0-2.21 1.79-4 4-4s4 1.79 4 4" stroke="#0057D2" stroke-width="1.3" stroke-linecap="round"/><circle cx="5.5" cy="6" r="1.8" stroke="#0057D2" stroke-width="1.3"/><path d="M2 14c0-2 1.79-3.5 4-3.5" stroke="#0057D2" stroke-width="1.3" stroke-linecap="round"/></svg>'
 };
 const diagramIcon = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 2h5v5H2V2zm7 0h5v5H9V2zM2 9h5v5H2V9zm7 0h5v5H9V9z" stroke="#0057D2" stroke-width="1.2" fill="none"/></svg>';
 
 function updateAttrPanel() {
     const titleEl = document.querySelector('.rsp-header-title');
     const iconEl = document.querySelector('.rsp-header-icon');
-    const dictOutlink = document.getElementById('rspDictOutlink');
+    const attrBody = document.getElementById('attrBody');
+    if (attrBody) attrBody.scrollTop = 0;
     if (selectedElementId && elementData[selectedElementId]) {
         const d = elementData[selectedElementId];
         titleEl.textContent = d.name;
         iconEl.innerHTML = elTypeIcons[d.type] || diagramIcon;
-        if (dictOutlink) dictOutlink.style.display = d.linkedDictId ? 'flex' : 'none';
         renderElementAttributes(selectedElementId);
     } else {
         titleEl.textContent = 'Diagram Attributes';
         iconEl.innerHTML = diagramIcon;
-        if (dictOutlink) dictOutlink.style.display = 'none';
         renderDiagramAttributes();
     }
-}
-
-function goToDictionaryFromPanel() {
-    if (!selectedElementId || !elementData[selectedElementId]) return;
-    var dictId = elementData[selectedElementId].linkedDictId;
-    if (dictId) openDetail(dictId);
 }
 
 // Keyboard shortcuts
